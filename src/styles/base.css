@@ -138,6 +138,11 @@ img { max-width: 100%; display: block; }
   flex-direction: column-reverse;
   align-items: flex-end;
   gap: 6px;
+  /* Floats in front of every screen's content by design, but it must never
+     steal a tap from whatever's underneath (e.g. the Danger Zone's lock
+     latches, which sit in the same bottom-right corner once scrolled into
+     view) — only its own close button opts back in below. */
+  pointer-events: none;
 }
 @media (min-width: 900px) { .liveticker { display: none; } }
 .liveticker__item {
@@ -175,6 +180,7 @@ img { max-width: 100%; display: block; }
   display: grid;
   place-items: center;
   color: var(--muted);
+  pointer-events: auto;
 }
 .liveticker__close:hover { color: var(--accent); }
 
