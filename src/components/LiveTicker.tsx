@@ -4,11 +4,15 @@
 // panel: "on the right bottom corner going up just the same way as the left
 // panel but just text without the panel showing on top of everything".
 // Rows stack upward from a fixed close button anchored at the bottom, in
-// front of every screen's content. CSS hides this entirely on desktop
-// (>=900px), where the Sidebar's own feed already covers the job — see
-// .liveticker in base.css.
+// front of every screen's content. On/off lives in useLiveTicker (a tiny
+// shared store) rather than local state, since the mobile header's brand
+// mark is ALSO a toggle for this — see Header.tsx — and the two need to
+// agree on the current state. CSS hides this entirely on desktop (>=900px),
+// where the Sidebar's own feed already covers the job — see .liveticker in
+// base.css.
 import { useEffect, useMemo, useState } from "react";
 import { useLiveFeed } from "../stores/useLiveFeed";
+import { useLiveTicker } from "../stores/useLiveTicker";
 import { IconClose } from "./icons";
 
 const FEED_WINDOW = 4;
@@ -16,7 +20,8 @@ const FEED_INTERVAL_MS = 5000;
 
 export function LiveTicker() {
   const feedPool = useLiveFeed();
-  const [dismissed, setDismissed] = useState(false);
+  const on = useLiveTicker((s) => s.on);
+  const turnOff = useLiveTicker((s) => s.turnOff);
   const [tick, setTick] = useState(0);
 
   useEffect(() => {
@@ -31,13 +36,13 @@ export function LiveTicker() {
     return Array.from({ length: n }, (_, i) => feedPool[(tick + i) % feedPool.length]);
   }, [feedPool, tick]);
 
-  if (dismissed || visible.length === 0) return null;
+  if (!on || visible.length === 0) return null;
 
   return (
     <div className="liveticker" data-tour="live-ticker">
       <button
         className="liveticker__close"
-        onClick={() => setDismissed(true)}
+        onClick={turnOff}
         aria-label="Turn off live updates"
         title="Turn off live updates"
       >

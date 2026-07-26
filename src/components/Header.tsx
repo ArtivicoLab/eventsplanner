@@ -2,6 +2,7 @@ import { navigate, useRoute } from "../router";
 import { useSync } from "../stores/useSync";
 import { useDemo } from "../lib/demo";
 import { openCoachTour } from "../stores/useCoachTour";
+import { useLiveTicker } from "../stores/useLiveTicker";
 import { IconCompass } from "./icons";
 import { ROUTE_LABELS } from "../nav";
 
@@ -15,6 +16,8 @@ export function Header() {
   const { status, pending, connected, needsReauth, busy, tapToRetry } = useSync();
   const demo = useDemo((s) => s.demo);
   const route = useRoute();
+  const liveOn = useLiveTicker((s) => s.on);
+  const toggleLive = useLiveTicker((s) => s.toggle);
   const retryable = connected && !needsReauth && status === "offline";
   const clickable = needsReauth || retryable;
   const cls = needsReauth || status === "offline"
@@ -33,7 +36,15 @@ export function Header() {
   return (
     <header className="appbar">
       <span className="appbar__brand">
-        <img src="/favicon-96x96.png" alt="" aria-hidden width={22} height={22} className="appbar__brandimg" />
+        <button
+          className={`appbar__brandbtn${liveOn ? "" : " appbar__brandbtn--off"}`}
+          onClick={toggleLive}
+          aria-pressed={liveOn}
+          aria-label={liveOn ? "Turn off live updates" : "Turn on live updates"}
+          title={liveOn ? "Turn off live updates" : "Turn on live updates"}
+        >
+          <img src="/favicon-96x96.png" alt="" aria-hidden width={22} height={22} className="appbar__brandimg" />
+        </button>
         Event Planner
         {demo && <span className="brand-demo" data-tour="demo-badge">Demo</span>}
       </span>
