@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx tsc *)",
+      "Bash(npm test *)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:5518/)",
+      "Bash(node -e \"require.resolve\\('playwright'\\)\")",
+      "Bash(npx --no-install playwright --version)",
+      "Bash(ls -la /Users/gradikayamba/Library/Caches/ms-playwright/ 2>&1)",
+      "Read(//Users/gradikayamba/Library/Caches/ms-playwright/**)",
+      "Bash(npx --yes playwright@1.62.0 --version)",
+      "Bash(node -e ' *)",
+      "Read(//Users/gradikayamba/.npm/_npx/**)",
+      "Bash(NODE_PATH=\"/Users/gradikayamba/.npm/_npx/6f4879659183bc49/node_modules\" node pw-check.mjs)",
+      "Bash(ln -sfn /Users/gradikayamba/.npm/_npx/6f4879659183bc49/node_modules node_modules)",
+      "Bash(node pw-check.mjs)",
+      "Bash(node pw-seating.mjs)",
+      "Bash(git add *)"
+    ]
+  }
+}

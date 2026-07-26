@@ -1,0 +1,1442 @@
+@import "./tokens.css";
+
+/* ============================================================
+   Event Planner — base stylesheet
+   "First Love" identity: warm ivory blush cards, deep wine ink, a serif
+   display face for headings/event names, a rose-red accent with an
+   antique gold secondary. Hand-written CSS, no framework.
+   ============================================================ */
+
+* { box-sizing: border-box; }
+html, body, #root { height: 100%; }
+body {
+  margin: 0;
+  font-family: var(--font);
+  background: var(--bg-grad);
+  background-attachment: fixed;
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior-y: none;
+}
+h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 700; margin: 0; letter-spacing: -0.01em; }
+p { margin: 0; }
+button, input, select, textarea { font-family: inherit; color: inherit; }
+button { cursor: pointer; }
+a { color: var(--accent); }
+img { max-width: 100%; display: block; }
+
+/* ---------- scrollbars ----------
+   The app has a lot of independently-scrolling regions now (sidebar nav,
+   the calendar's horizontal month scroll, the mobile tab bar, the seating
+   canvas, every bottom sheet) — a global rule here themes every one of
+   them at once instead of chasing each container down individually.
+   Firefox via scrollbar-width/-color, everyone else via ::-webkit-*. Mobile
+   browsers mostly render their own overlay scrollbar regardless and ignore
+   this, which is fine — it's a desktop-facing polish detail. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent) var(--surface-2);
+}
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-track { background: var(--surface-2); }
+*::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--accent), var(--accent-2));
+  border-radius: var(--r-pill);
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--accent), black 12%),
+    color-mix(in srgb, var(--accent-2), black 12%)
+  );
+}
+*::-webkit-scrollbar-corner { background: var(--surface-2); }
+
+/* ---------- layout shell ---------- */
+.app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+.app__col { display: flex; flex-direction: column; min-height: 100dvh; }
+.app__main {
+  flex: 1;
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: var(--sp-4) var(--sp-4) calc(96px + var(--safe-bottom));
+  animation: page-in 260ms var(--ease);
+}
+.app__main--wide { max-width: 1160px; }
+@keyframes page-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (min-width: 900px) {
+  .app { flex-direction: row; }
+  .app__col { flex: 1; min-width: 0; }
+  .app__main { padding: var(--sp-6) var(--sp-8) var(--sp-8); }
+}
+/* NOTE: the responsive show/hide for .sidebar/.tabbar lives AFTER both
+   components' own rules (see "responsive chrome" below) — a media query adds
+   no specificity, so hiding them up here would silently lose the cascade to
+   the later `display: flex` in each component's base rule. That exact bug
+   shipped once: both bars visible at every width. */
+
+/* ---------- top app bar (mobile) ---------- */
+.appbar {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: calc(var(--sp-3) + var(--safe-top)) var(--sp-4) var(--sp-3);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--hairline);
+}
+.appbar__brand {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 17px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.appbar__brandimg { border-radius: 6px; box-shadow: 0 4px 12px color-mix(in srgb, var(--accent) 30%, transparent); }
+.appbar__spacer { flex: 1; }
+.appbar__tour { display: none; }
+@media (min-width: 900px) { .appbar { display: none; } }
+
+.brand-demo {
+  font-family: var(--font);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-radius: var(--r-pill);
+  padding: 2px 8px;
+}
+
+.avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: none;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  color: #fff;
+  font-weight: 800;
+  font-size: 12px;
+  display: grid;
+  place-items: center;
+  flex: none;
+}
+
+/* ---------- sidebar (desktop) ---------- */
+.sidebar {
+  width: 258px;
+  flex: none;
+  position: sticky;
+  top: 0;
+  /* Frosted glass, not a flat panel: translucent over the page's own soft
+     gradient, same technique the mobile .appbar/.tabbar already use. */
+  background: color-mix(in srgb, var(--surface) 72%, transparent);
+  backdrop-filter: blur(20px);
+  border-right: 1px solid var(--hairline);
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  overflow: hidden;
+}
+.sidebar__brand {
+  position: relative;
+  z-index: 0;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 19px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: var(--sp-5) var(--sp-4) var(--sp-3);
+}
+/* A soft, fixed glow behind the brand mark, the same "candlelight" touch
+   cards/the hero use elsewhere, so the sidebar has a little atmosphere
+   instead of reading as a flat, static panel. */
+.sidebar__brand::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  top: -40px;
+  left: -60px;
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--accent-2) 16%, transparent), transparent 70%);
+  pointer-events: none;
+}
+.sidebar__brandimg { border-radius: 8px; box-shadow: 0 4px 12px color-mix(in srgb, var(--accent) 30%, transparent); }
+.sidebar__scroll { flex: 1; overflow-y: auto; padding: 0 var(--sp-2) var(--sp-3); }
+.sidebar__group { margin-bottom: var(--sp-3); }
+.sidebar__grouptitle {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: var(--sp-2) var(--sp-3) 6px;
+}
+.sidebar__item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: none;
+  background: none;
+  padding: 9px var(--sp-3);
+  border-radius: var(--r-input);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  text-align: left;
+  transition: background 140ms var(--ease), transform 140ms var(--ease);
+}
+.sidebar__item:hover { background: var(--surface-2); transform: translateX(2px); }
+/* A soft two-hue gradient pill (pink into lavender) for the active
+   destination, instead of a flat tint: the same pairing the primary
+   button and "today" marker use, so the eye learns one signature. A
+   faint matching glow keeps it from reading as just another flat row. */
+.sidebar__item--on {
+  background: linear-gradient(90deg, var(--accent-soft), var(--accent-2-soft));
+  color: var(--accent);
+  box-shadow: 0 2px 10px color-mix(in srgb, var(--accent) 16%, transparent);
+}
+.sidebar__item--on:hover { transform: none; }
+.sidebar__coachbtn { margin: 0 var(--sp-2) var(--sp-2); width: calc(100% - 16px); }
+.sidebar__ico {
+  width: 28px;
+  height: 28px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  flex: none;
+  color: var(--ink);
+  box-shadow: 0 2px 5px rgba(74, 58, 74, 0.1);
+}
+.sidebar__badge {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-radius: var(--r-pill);
+  padding: 2px 8px;
+}
+.sidebar__item--on .sidebar__badge { background: color-mix(in srgb, var(--surface) 65%, transparent); }
+
+/* A compact "upcoming events" feed filling the sidebar's own dead space
+   below the nav groups, styled like a livestream chat scrollback (the
+   inspiration was literally "chats on Kick"): a colorful bold name, a
+   short plain-text status next to it, tight single-line-first rows. Rows
+   fade/slide in once on mount (staggered per row in Sidebar.tsx) for a
+   little personality, not because it's an actually-live feed. */
+.sidebar__feedrow {
+  display: block;
+  width: 100%;
+  border: none;
+  background: none;
+  padding: 6px var(--sp-3);
+  border-radius: var(--r-input);
+  text-align: left;
+  animation: sidebar-feed-in 320ms var(--ease) backwards;
+}
+.sidebar__feedrow:hover { background: var(--surface-2); }
+/* System messages (Sync/Settings/Tasks/Budget) have nothing to click
+   through to, unlike an event row: no hover highlight, so the row doesn't
+   falsely read as interactive. */
+.sidebar__feedrow--static:hover { background: none; }
+@keyframes sidebar-feed-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: none; }
+}
+.sidebar__feedline { font-size: 12.5px; line-height: 1.4; }
+.sidebar__feedname { font-weight: 700; }
+.sidebar__feedmsg { color: var(--muted); }
+.sidebar__feeddot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 5px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: now-pulse 2s infinite;
+}
+@media (prefers-reduced-motion: reduce) { .sidebar__feeddot { animation: none; } }
+.sidebar__feedhead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--sp-2) var(--sp-3) 6px;
+}
+.sidebar__feedhead span {
+  display: flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.sidebar__feedpause {
+  border: none;
+  background: none;
+  padding: 2px;
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+}
+.sidebar__feedpause:hover { color: var(--accent); }
+
+.sidebar__foot {
+  padding: var(--sp-3) var(--sp-4);
+  border-top: 1px solid var(--hairline);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.sidebar__version { font-size: 11px; color: var(--muted); }
+
+/* ---------- bottom tab bar (mobile) ---------- */
+.tabbar {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 8px calc(6px + var(--safe-bottom));
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  backdrop-filter: blur(10px);
+  border-top: 1px solid var(--hairline);
+}
+.tabbar__brandbtn { border: none; background: none; padding: 4px; flex: none; }
+.tabbar__brand { border-radius: 7px; box-shadow: 0 4px 12px color-mix(in srgb, var(--accent) 30%, transparent); }
+.tabbar__scroll { display: flex; flex: 1; overflow-x: auto; gap: 2px; }
+.tabbar__btn {
+  flex: 1;
+  min-width: 58px;
+  border: none;
+  background: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 6px 4px;
+  border-radius: var(--r-input);
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--muted);
+  position: relative;
+}
+.tabbar__btn--active { color: var(--accent); }
+.tabbar__btn--editing { animation: jiggle 260ms ease-in-out infinite; }
+.tabbar__btn--dragging { z-index: 2; }
+@keyframes jiggle {
+  0%, 100% { transform: rotate(-1.4deg); }
+  50% { transform: rotate(1.4deg); }
+}
+.tabbar__iconwrap { position: relative; }
+.tabbar__unpin {
+  position: absolute;
+  top: -6px;
+  left: -6px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--alert);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  z-index: 1;
+}
+.navbadge {
+  position: absolute;
+  top: -6px;
+  right: -8px;
+  min-width: 15px;
+  height: 15px;
+  padding: 0 3px;
+  border-radius: var(--r-pill);
+  background: var(--alert);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 800;
+  display: grid;
+  place-items: center;
+}
+.navbadge--inline { position: static; margin-left: auto; }
+.tabbar-editbar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: calc(var(--sp-3) + var(--safe-top)) var(--sp-4) var(--sp-3);
+  background: var(--surface);
+  border-bottom: 1px solid var(--hairline);
+}
+.tabbar-editbar__label { font-weight: 700; font-size: 14px; }
+
+/* ---------- responsive chrome ----------
+   Desktop gets the sidebar, mobile gets the bottom tab bar — never both.
+   These MUST stay below the .sidebar and .tabbar base rules (see the note
+   near the top of this file). */
+@media (min-width: 900px) {
+  .tabbar { display: none; }
+}
+@media (max-width: 899px) {
+  .sidebar { display: none; }
+}
+
+/* ---------- buttons ---------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 13px 20px;
+  border: none;
+  border-radius: var(--r-pill);
+  font-size: 15px;
+  font-weight: 700;
+  transition: transform 160ms var(--ease), opacity 160ms var(--ease);
+}
+.btn:active { transform: scale(0.98); }
+.btn--auto { width: auto; }
+.btn--primary {
+  /* The app's one recurring two-hue gradient (pink into lavender), not a
+     flat fill: the same pairing the sidebar's active pill and the
+     calendar's "today" marker use. */
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  color: #fff;
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--accent) 32%, transparent), var(--shadow-sm);
+}
+.btn--ghost { background: var(--surface-2); color: var(--ink); }
+.btn--danger { background: var(--alert); color: #fff; }
+.btn--stack { margin-bottom: 10px; }
+.btn[disabled] { opacity: 0.5; pointer-events: none; }
+
+/* ---------- chips ---------- */
+.chip-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--hairline);
+  background: var(--surface);
+  color: var(--ink);
+  padding: 7px 14px;
+  border-radius: var(--r-pill);
+  font-size: 13px;
+  font-weight: 600;
+}
+.chip--on {
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  border-color: transparent;
+  color: #fff;
+}
+.chip--urgent { border-width: 1.5px; }
+
+/* ---------- segmented control ---------- */
+.segmented {
+  display: flex;
+  background: var(--surface-2);
+  border-radius: var(--r-pill);
+  padding: 3px;
+  gap: 2px;
+}
+.segmented__seg {
+  flex: 1;
+  border: none;
+  background: none;
+  padding: 8px 10px;
+  border-radius: var(--r-pill);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted);
+}
+.segmented__seg--on { background: var(--surface); color: var(--accent); box-shadow: var(--shadow-sm); }
+
+/* ---------- checkbox ---------- */
+.check {
+  width: 24px;
+  height: 24px;
+  border-radius: 8px;
+  border: 2px solid var(--hairline);
+  background: var(--surface);
+  display: grid;
+  place-items: center;
+  flex: none;
+  color: #fff;
+}
+.check--on { background: var(--success); border-color: var(--success); }
+
+.toggle {
+  position: relative;
+  width: 40px;
+  height: 24px;
+  flex: none;
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+  border: 1px solid var(--hairline);
+}
+.toggle::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  transition: left 160ms var(--ease);
+}
+.toggle--on { background: linear-gradient(90deg, var(--accent), var(--accent-2)); border-color: transparent; }
+.toggle--on::after { left: 18px; }
+
+/* ---------- cards ---------- */
+.card {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--surface);
+  border-radius: var(--r-card);
+  /* The dual shadow (tight pink contact shadow + big soft lavender bloom,
+     see tokens.css) does all the "floating" work here; cards otherwise stay
+     a plain, almost-white surface a hair lighter than the page itself. */
+  box-shadow: var(--shadow);
+  padding: var(--sp-4);
+  overflow: hidden;
+}
+.card + .card { margin-top: var(--sp-3); }
+/* The rule above is meant for cards stacked vertically in normal document
+   flow. Inside a flex/grid ROW (stat tiles side by side), it does something
+   much worse than a wrong gap: with the default `align-items: stretch`, that
+   margin-top makes the row's own cross-size taller to fit it, and then the
+   FIRST tile (which has no preceding sibling, so no margin-top) stretches to
+   fill that extra height alone — it visibly grows relative to its row-mates
+   instead of just being mis-spaced. Confirmed live: "Total events" rendering
+   taller than the other 3 dashboard stat tiles. Reset it inside every
+   horizontal tile row so `gap` is the only spacing mechanism in play there.  */
+.stat-row > .card + .card,
+.grid-2 > .card + .card,
+.grid-3 > .card + .card { margin-top: 0; }
+
+/* The app's signature motif: a delicate fading rule with a small gold
+   diamond mark caught at its center, used everywhere a screen needs a soft
+   break rather than a hard rule. A section separating from its breakdown,
+   one part of a form from the next. This replaced a dashed "ticket stub"
+   perforation (two punched-out circles at the ends) left over from an
+   earlier, unrelated ticket/invitation identity. A torn-ticket edge reads
+   as "event admission," not "romance," so recoloring it was never going to
+   be enough; the shape itself had to change. The diamond mirrors the same
+   small gold accent on the app icon, so it reads as one deliberate signature
+   repeated in two places, not a one-off decoration. No literal hearts: keep
+   it to this geometric mark. */
+.love-divider {
+  position: relative;
+  height: 1px;
+  margin: var(--sp-5) 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--hairline) 15%,
+    var(--hairline) 85%,
+    transparent
+  );
+}
+.love-divider::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 9px;
+  height: 9px;
+  margin: -4.5px 0 0 -4.5px;
+  border-radius: 2px;
+  background: var(--accent-2);
+  transform: rotate(45deg);
+}
+
+/* ---------- forms ---------- */
+.field { display: flex; flex-direction: column; gap: 6px; margin-bottom: var(--sp-4); }
+.field__label { font-size: 12.5px; font-weight: 700; color: var(--muted); }
+.input, .select, .textarea {
+  width: 100%;
+  border: 1px solid var(--hairline);
+  background: var(--surface);
+  border-radius: var(--r-input);
+  padding: 11px 13px;
+  font-size: 15px;
+  color: var(--ink);
+}
+.input:focus, .select:focus, .textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+.textarea { resize: vertical; min-height: 72px; }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-3); }
+
+/* ---------- bottom sheet ---------- */
+.sheet-scrim {
+  position: fixed;
+  inset: 0;
+  background: var(--scrim);
+  z-index: 50;
+  animation: fade-in 200ms var(--ease);
+}
+.sheet {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  z-index: 51;
+  max-height: 88dvh;
+  overflow-y: auto;
+  background: var(--surface);
+  border-radius: 22px 22px 0 0;
+  padding: 14px var(--sp-4) calc(var(--sp-5) + var(--safe-bottom));
+  box-shadow: var(--shadow);
+  animation: sheet-in 280ms var(--ease);
+}
+@media (min-width: 640px) {
+  .sheet {
+    left: 50%; right: auto; bottom: auto; top: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%; max-width: 480px;
+    border-radius: var(--r-card);
+    max-height: 84dvh;
+    /* sheet-in (mobile) animates `transform` itself (slide up from
+       translateY(24px) to none), which would clobber the -50%/-50%
+       centering transform above for the animation's whole duration — the
+       sheet opens off-center, then visibly snaps to center the instant the
+       animation ends and this cascaded transform takes back over. This
+       desktop-only keyframe bakes the centering INTO both animation
+       endpoints instead, so there's nothing to snap to. */
+    animation: sheet-in-desktop 280ms var(--ease);
+  }
+}
+@keyframes sheet-in-desktop {
+  from { transform: translate(-50%, -50%) translateY(12px); opacity: 0; }
+  to { transform: translate(-50%, -50%); opacity: 1; }
+}
+.sheet__grabber {
+  width: 40px; height: 4px; border-radius: 999px;
+  background: var(--hairline);
+  margin: 0 auto 14px;
+}
+@media (min-width: 640px) { .sheet__grabber { display: none; } }
+.sheet__title { font-size: 19px; }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes sheet-in { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+/* ---------- toast ---------- */
+.toaster {
+  position: fixed;
+  left: 0; right: 0;
+  bottom: calc(84px + var(--safe-bottom));
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+  padding: 0 var(--sp-4);
+}
+@media (min-width: 900px) { .toaster { bottom: var(--sp-5); } }
+.toast {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--ink);
+  color: var(--surface);
+  padding: 12px 16px;
+  border-radius: var(--r-pill);
+  box-shadow: var(--shadow);
+  font-size: 13.5px;
+  font-weight: 600;
+  animation: toast-in 220ms var(--ease);
+}
+@keyframes toast-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.toast__action { border: none; background: none; color: var(--accent); font-weight: 800; }
+
+/* ---------- empty state ---------- */
+.empty { text-align: center; padding: var(--sp-8) var(--sp-4); }
+.empty__title { font-family: var(--font-display); font-size: 18px; font-weight: 700; }
+.empty__sub { color: var(--muted); font-size: 13.5px; margin-top: 4px; }
+
+/* ---------- sync pill / banners ---------- */
+.syncpill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: none;
+  background: var(--surface-2);
+  padding: 7px 13px;
+  border-radius: var(--r-pill);
+  font-size: 12px;
+  font-weight: 700;
+}
+.syncpill__dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+.syncpill--ok .syncpill__dot { background: var(--success); }
+.syncpill--busy .syncpill__dot { background: var(--accent); }
+.syncpill--off .syncpill__dot { background: var(--warn); }
+
+.demobar, .reconnectbar, .updatebar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px var(--sp-4);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+.demobar { background: var(--accent-soft); color: var(--accent); }
+.reconnectbar { background: var(--warn); color: #fff; }
+.updatebar { background: var(--accent-2); color: #fff; justify-content: center; position: sticky; top: 0; z-index: 15; }
+.demobar__btn, .reconnectbar__btn, .updatebar__btn {
+  border: none;
+  border-radius: var(--r-pill);
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 800;
+  background: rgba(255,255,255,0.9);
+  color: var(--ink);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+}
+
+/* ---------- lock-gated button ---------- */
+.lockgate { display: flex; align-items: center; gap: 10px; }
+.lockgate__btn { flex: 1; }
+.lockgate__btn--shake { animation: shake 400ms; }
+@keyframes shake {
+  10%, 90% { transform: translateX(-2px); }
+  20%, 80% { transform: translateX(3px); }
+  30%, 50%, 70% { transform: translateX(-5px); }
+  40%, 60% { transform: translateX(5px); }
+}
+.lockgate__lockwrap { position: relative; flex: none; }
+.lockgate__lock {
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  border: none;
+  display: grid; place-items: center;
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+}
+.lockgate__lock::after {
+  content: "";
+  position: absolute; inset: 0;
+  background: radial-gradient(circle at 30% 25%, rgba(255,255,255,0.55), transparent 60%);
+}
+.lockgate__lock--flashred { background: #b3261e; }
+.lockgate__lock--flashblue { background: #1e3fb3; }
+.lockgate__lock--open { background: var(--success); }
+.lockgate__confetti {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 6px; height: 6px;
+  border-radius: 2px;
+  animation: confetti-burst 650ms ease-out forwards;
+}
+@keyframes confetti-burst {
+  from { transform: translate(-50%, -50%) rotate(0deg); opacity: 1; }
+  to { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) rotate(var(--rot)); opacity: 0; }
+}
+
+/* ---------- generic utility classes ---------- */
+.muted { color: var(--muted); }
+.spread { display: flex; align-items: center; justify-content: space-between; }
+.spread--gap8 { gap: 8px; }
+.fs-13 { font-size: 13px; }
+.mb-1 { margin-bottom: 4px; }
+.row-label-12 { font-size: 12px; }
+.dot-9 { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); flex: none; display: inline-block; }
+.dot-9--accent { background: var(--accent); }
+.dot-9--accent2 { background: var(--accent-2); }
+.stat-row { display: flex; flex-wrap: wrap; gap: var(--sp-3); }
+.section-title {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: var(--sp-2);
+}
+.page-title { font-size: 26px; margin-bottom: var(--sp-1); }
+.page-sub { color: var(--muted); font-size: 13.5px; margin-bottom: var(--sp-5); }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-3); }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-3); }
+/* Mobile-first: a plain stacked column with the SAME gap the rest of a
+   screen's sections use, so there's no seam between "before grid-dash" and
+   "inside it". Widens into an actual multi-column grid at desktop — same
+   gap value either way, only the layout direction changes. */
+.grid-dash { display: flex; flex-direction: column; gap: var(--sp-4); }
+/* Flex/grid `gap` and the `.card + .card` sibling margin are two independent
+   spacing mechanisms that would otherwise stack (16px gap + 12px margin =
+   28px) — zero out the margin here since gap already owns the spacing. */
+.grid-dash > .card + .card { margin-top: 0; }
+@media (min-width: 900px) { .grid-dash { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: var(--sp-4); } }
+
+/* ---------- hero (Dashboard's big intro card) ----------
+   Title, subtitle, tour button and the stat row all living inside one big
+   soft card instead of sitting bare on the page background. This is the
+   one component the reference mockup introduced that didn't already exist
+   here. Decorative floating shapes are plain soft dots/circles, not
+   hearts: keep it that way (owner call, 2026-07-24). */
+.hero {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--r-card);
+  margin-bottom: var(--sp-4);
+  background: linear-gradient(120deg, var(--accent-soft), var(--surface) 70%, var(--accent-2-soft));
+  border: 1px solid var(--surface);
+  box-shadow: var(--shadow);
+}
+.hero-art { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.hero-art span {
+  position: absolute;
+  width: var(--s, 10px);
+  height: var(--s, 10px);
+  border-radius: 50%;
+  background: var(--c, var(--accent));
+  opacity: 0.4;
+  animation: hero-floaty 6s ease-in-out infinite;
+}
+@keyframes hero-floaty {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+@media (prefers-reduced-motion: reduce) { .hero-art span { animation: none; } }
+.hero-body { position: relative; padding: var(--sp-6) var(--sp-6) var(--sp-5); }
+.hero-top { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--sp-4); flex-wrap: wrap; }
+.hero-top .page-title { margin-bottom: 0; }
+.hero-top .page-sub { margin: 7px 0 0; }
+/* Inside the hero, stats live as one unified strip with internal dividers
+   instead of separate floating cards: nesting 4 shadowed cards inside an
+   already-shadowed hero card would double up the "floating" effect. */
+.hero .stat-row {
+  margin-top: var(--sp-5);
+  flex-wrap: wrap;
+  gap: 0;
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-input);
+  overflow: hidden;
+}
+.hero .stat-row > .stat {
+  flex: 1 1 150px;
+  min-width: 150px;
+  padding: 15px 20px;
+  border-left: 1px solid var(--hairline);
+}
+.hero .stat-row > .stat:first-child { border-left: none; }
+.stat .k { font-size: 12.5px; font-weight: 600; color: var(--muted); }
+.stat .v {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 700;
+  margin-top: 4px;
+  font-variant-numeric: tabular-nums;
+}
+.tour-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--accent);
+  background: var(--surface);
+  border: 1px solid var(--accent-soft);
+  padding: 9px 16px;
+  border-radius: var(--r-pill);
+}
+
+/* ---------- charts (CSS/JS only, no SVG, no library) ---------- */
+.chart-donut { display: flex; align-items: center; gap: var(--sp-4); flex-wrap: wrap; }
+.chart-donut__ring { border-radius: 50%; position: relative; flex: none; }
+.chart-donut__hole {
+  position: absolute;
+  border-radius: 50%;
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.chart-donut__legend { display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 140px; }
+.chart-donut__slice-label { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; }
+.chart-donut__swatch { width: 10px; height: 10px; border-radius: 3px; flex: none; }
+
+.chart-statusbar__track { display: flex; height: 12px; border-radius: 999px; overflow: hidden; background: var(--surface-2); }
+.chart-statusbar__legend { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 10px; }
+.chart-legend-item { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--muted); }
+.txt-strong { color: var(--ink); font-weight: 700; }
+
+.chart-bars { display: flex; flex-direction: column; gap: var(--sp-3); }
+.pbar { height: 10px; border-radius: 999px; background: var(--surface-2); overflow: hidden; }
+.pbar__fill { height: 100%; border-radius: 999px; transition: width 500ms var(--ease); }
+.pbar__fill--budget { background: var(--muted); opacity: 0.5; }
+.pbar__fill--actual { background: var(--accent); }
+/* An event over its budget needs to be instantly obvious, not something
+   you notice only by comparing two bar lengths yourself. */
+.pbar__fill--over { background: linear-gradient(90deg, var(--alert), color-mix(in srgb, var(--alert), black 15%)); }
+
+.chart-groupedbars { display: flex; flex-direction: column; gap: var(--sp-3); }
+.chart-groupedbars__legend { display: flex; gap: 14px; margin-bottom: 2px; }
+.chart-groupedbars__label { font-size: 12.5px; font-weight: 700; margin-bottom: 4px; }
+
+.chart-columns { display: flex; align-items: flex-end; gap: 6px; }
+.chart-column { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; gap: 6px; }
+.chart-column__bar { width: 100%; max-width: 26px; border-radius: 6px 6px 3px 3px; position: relative; }
+.chart-column__value { position: absolute; top: -18px; left: 50%; transform: translateX(-50%); font-size: 10px; font-weight: 800; color: var(--ink); white-space: nowrap; }
+.chart-column__label { font-size: 10.5px; }
+.chart-stackedcolumns__legend { display: flex; gap: 14px; margin-bottom: 8px; }
+.chart-stackedcolumns__bar { width: 100%; max-width: 26px; border-radius: 6px 6px 3px 3px; overflow: hidden; display: flex; flex-direction: column-reverse; }
+.chart-stackedcolumns__seg { width: 100%; }
+
+/* ---------- calendar ---------- */
+.month-card { overflow: hidden; backdrop-filter: blur(10px); }
+/* The grid is 7 real columns plus text-bearing event bars. Squeezing that
+   onto a 390px phone would make every bar illegible. Scroll it horizontally
+   instead of shrinking it; the weekday header and week rows share one
+   scroll container (.month-card__inner) so they always stay aligned. */
+.month-card__scroll { overflow-x: auto; }
+.month-card__inner { min-width: 630px; }
+.calgrid { display: grid; grid-template-columns: repeat(7, 1fr); border-bottom: 1px solid var(--hairline); }
+.calgrid__weekday { font-size: 10.5px; font-weight: 800; color: var(--muted); text-align: center; padding: 10px 0; text-transform: uppercase; letter-spacing: 0.1em; }
+.calgrid__weekday--wknd { color: var(--accent); }
+
+/* Bars are absolutely positioned OVER the week grid (left/width computed
+   from startCol/span as percentages, top from a fixed per-lane offset in
+   CalendarScreen.tsx), not grid-row-placed children. A grid-row approach
+   here previously produced week rows of visibly inconsistent height (an
+   empty week and a 3-lane-busy week auto-sized completely differently,
+   since a row with no single-row content borrows leftover space from the
+   day cell's spanning min-height unpredictably). Fixed pixel/percentage
+   math sidesteps that entirely: every week is the same height regardless
+   of how many bars it holds, matching the reference mockup exactly. */
+.calweek { position: relative; display: grid; grid-template-columns: repeat(7, 1fr); height: 130px; border-bottom: 1px solid var(--hairline); }
+.calweek:last-child { border-bottom: none; }
+.calcell { border-right: 1px solid var(--hairline); padding: 8px 9px; position: relative; }
+.calcell:last-child { border-right: none; }
+.calcell--wknd { background: color-mix(in srgb, var(--accent-soft) 45%, transparent); }
+.calcell--out { opacity: 0.42; }
+.calcell__num {
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.calcell--today {
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--accent-soft) 65%, transparent),
+    color-mix(in srgb, var(--accent-2-soft) 65%, transparent)
+  );
+}
+.calcell--today .calcell__num {
+  color: #fff;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  box-shadow: 0 3px 10px color-mix(in srgb, var(--accent) 35%, transparent);
+}
+.calcell--today__label {
+  position: absolute;
+  top: 9px;
+  right: 9px;
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: var(--accent);
+}
+/* A day landed on via a link elsewhere (the Dashboard mini calendar, an
+   event's dates) gets a brief pulse so it's obvious which day the click
+   actually meant, not just "the calendar opened somewhere". */
+.calcell--flash { animation: calcell-flash 1600ms var(--ease); }
+@keyframes calcell-flash {
+  0%, 100% { box-shadow: none; }
+  15%, 55% { box-shadow: 0 0 0 2.5px var(--accent) inset; background: var(--accent-soft); }
+}
+.calbar {
+  position: absolute;
+  height: 22px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 9px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ink);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(74, 58, 74, 0.07);
+}
+.calbar__dot { width: 6px; height: 6px; border-radius: 50%; flex: none; }
+.caloverflow { position: absolute; font-size: 10px; font-weight: 800; color: var(--muted); left: 9px; }
+
+/* Quick filters + legend, unified into one compact wrapping line instead
+   of three separate stacked blocks. */
+.legend-line { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin: 8px 0 var(--sp-4); font-size: 12.5px; color: var(--muted); }
+.legend-line__hint { color: var(--muted); }
+
+/* ---------- Calendar agenda rail ---------- */
+.cal-layout { display: grid; grid-template-columns: 1fr 272px; gap: var(--sp-4); align-items: start; }
+@media (max-width: 980px) { .cal-layout { grid-template-columns: 1fr; } }
+.rail { display: flex; flex-direction: column; gap: var(--sp-4); }
+.month-stats { display: flex; border: 1px solid var(--hairline); border-radius: var(--r-input); overflow: hidden; }
+.mstat { flex: 1; padding: 10px 8px; text-align: center; }
+.mstat + .mstat { border-left: 1px solid var(--hairline); }
+.mstat__v { font-family: var(--font-display); font-size: 22px; font-weight: 600; }
+.mstat__k { font-size: 11px; color: var(--muted); margin-top: 1px; }
+.agenda__row { display: flex; align-items: center; gap: 11px; padding: 10.5px 0; border-bottom: 1px solid var(--hairline); }
+.agenda__row:last-child { border-bottom: none; padding-bottom: 2px; }
+.agenda__row--past { opacity: 0.55; }
+.agenda__nowdot {
+  width: 8px;
+  height: 8px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: now-pulse 2s infinite;
+}
+@media (prefers-reduced-motion: reduce) { .agenda__nowdot { animation: none; } }
+.caloverflow { font-size: 10px; font-weight: 800; color: var(--muted); padding-left: 4px; }
+
+/* ---------- priority / status swatches used across list rows ---------- */
+.dotchip { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; }
+.dotchip__dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+
+/* ---------- upcoming lists (Dashboard's "Upcoming events"/"Upcoming tasks") ----------
+   Matches the reference mockup's row treatment: a small month/day date chip
+   (or a priority ring, for tasks) at the left, title + subtitle in the
+   middle, a status pill or due label at the right. */
+.list__row {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  width: 100%;
+  border: none;
+  background: none;
+  padding: 10px 2px;
+  text-align: left;
+  border-bottom: 1px solid var(--hairline);
+}
+.list__row:last-child { border-bottom: none; padding-bottom: 2px; }
+.datechip {
+  width: 43px;
+  flex: none;
+  text-align: center;
+  border-radius: 11px;
+  padding: 5px 0 6px;
+  background: var(--surface-2);
+  border: 1px solid var(--hairline);
+}
+.datechip__m {
+  font-size: 9px;
+  font-weight: 750;
+  letter-spacing: 0.1em;
+  color: var(--accent);
+  text-transform: uppercase;
+}
+.datechip__d { font-family: var(--font-display); font-size: 17px; line-height: 1.15; font-weight: 600; }
+.list__body { flex: 1; min-width: 0; }
+/* Both are <span>s in the JSX (for semantic weight, not layout), so without
+   an explicit display:block they flow as one inline run instead of
+   stacking title-over-subtitle — confirmed live: text jammed together and
+   wrapping mid-word ("Symphoria NightJul" / "28 – Jul 29"). */
+.list__title {
+  display: block;
+  font-size: 14.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.list__sub { display: block; font-size: 12.5px; color: var(--muted); margin-top: 1px; }
+.duelabel { font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; flex: none; }
+.duelabel--hot { color: var(--accent); font-weight: 650; }
+.pill { font-size: 12px; font-weight: 650; padding: 4.5px 12px; border-radius: var(--r-pill); white-space: nowrap; flex: none; }
+.ring {
+  width: 21px;
+  height: 21px;
+  border-radius: 50%;
+  flex: none;
+  border: 1.9px solid var(--hairline);
+  background: none;
+}
+
+/* ---------- Events page ---------- */
+.icon-btn {
+  width: 32px;
+  height: 32px;
+  flex: none;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  color: var(--muted);
+}
+.icon-btn:hover { color: var(--accent); border-color: var(--accent-soft); background: var(--accent-soft); }
+
+.searchbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--surface-2);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-pill);
+  padding: 10px 16px;
+  color: var(--muted);
+}
+.searchbar__input {
+  border: none;
+  outline: none;
+  background: transparent;
+  font: inherit;
+  font-size: 14.5px;
+  color: var(--ink);
+  width: 100%;
+}
+.searchbar__input::placeholder { color: var(--muted); }
+
+.filter-row { display: flex; align-items: baseline; gap: 14px; margin-top: 14px; flex-wrap: wrap; }
+.filter-lbl {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  min-width: 64px;
+  flex: none;
+}
+.more-filters-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--accent-2);
+  background: var(--accent-2-soft);
+  border: none;
+  border-radius: var(--r-pill);
+  padding: 6px 14px;
+  margin-left: auto;
+}
+
+/* A pulsing callout for whatever event's date range includes today, so
+   "something is happening right now" doesn't require scanning every card. */
+.now {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: linear-gradient(100deg, var(--accent-soft), var(--accent-2-soft) 65%, var(--surface-2));
+  border: 1px solid var(--surface);
+  border-radius: var(--r-card);
+  box-shadow: var(--shadow);
+  padding: 15px 22px;
+  margin-bottom: var(--sp-5);
+}
+.now__pulse {
+  width: 10px;
+  height: 10px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: now-pulse 2s infinite;
+}
+@keyframes now-pulse {
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 45%, transparent); }
+  70% { box-shadow: 0 0 0 9px color-mix(in srgb, var(--accent) 0%, transparent); }
+  100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 0%, transparent); }
+}
+@media (prefers-reduced-motion: reduce) { .now__pulse { animation: none; } }
+.now__txt { font-size: 14px; color: var(--muted); }
+.now__txt b { font-family: var(--font-display); font-size: 16.5px; color: var(--ink); font-weight: 600; margin-right: 6px; }
+.now__go {
+  margin-left: auto;
+  flex: none;
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--accent);
+  background: none;
+  border: none;
+}
+
+.events-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-4); }
+@media (max-width: 720px) { .events-grid { grid-template-columns: 1fr; } }
+
+/* Each event is a little invitation: a category-colored ribbon across the
+   top, a date chip, then title/meta/owner. `.evcard__body` carries the
+   click-through to the event's detail page; the action buttons stop
+   their own click from bubbling into that. */
+.evcard {
+  background: var(--surface);
+  border: 1px solid var(--surface);
+  border-radius: var(--r-card);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.evcard__ribbon { height: 9px; }
+.evcard__body { padding: var(--sp-4) var(--sp-5) 17px; cursor: pointer; }
+.evcard__top { display: flex; align-items: flex-start; gap: 12px; }
+.evcard__titlewrap { flex: 1; min-width: 0; }
+.evcard__title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 19px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.evcard__cat { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; font-weight: 650; color: var(--muted); margin-top: 6px; }
+.evcard__catdot { width: 7px; height: 7px; border-radius: 50%; flex: none; }
+.evcard__actions { display: flex; gap: 7px; flex: none; }
+.evcard__meta { display: flex; align-items: center; gap: 9px; margin-top: 13px; flex-wrap: wrap; }
+.evcard__foot {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+  padding-top: 13px;
+  border-top: 1px solid var(--hairline);
+}
+.evcard__price { margin-left: auto; font-family: var(--font-display); font-size: 18px; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+/* ---------- Tasks page ---------- */
+.triage { display: flex; gap: 10px; margin-bottom: var(--sp-4); flex-wrap: wrap; }
+.tri {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 650;
+  border-radius: var(--r-pill);
+  padding: 8px 15px;
+  border: 1px solid var(--hairline);
+  background: var(--surface);
+}
+.tri__dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.tri--hot { color: var(--alert); background: var(--alert-soft); border-color: transparent; }
+.tri--hot .tri__dot { background: var(--alert); }
+.tri--soon { color: var(--warn); background: var(--warn-soft); border-color: transparent; }
+.tri--soon .tri__dot { background: var(--warn); }
+.tri--all .tri__dot { background: var(--muted); }
+
+.taskgroup { margin-bottom: var(--sp-5); }
+.taskgroup__head { display: flex; align-items: center; gap: 10px; margin: 0 4px 9px; }
+.taskgroup__head h2 { font-family: var(--font-display); font-weight: 600; font-size: 18px; }
+.taskgroup__count {
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--muted);
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-pill);
+  padding: 2px 10px;
+}
+.taskgroup__head--hot h2 { color: var(--alert); }
+.taskgroup__head--hot .taskgroup__count { color: var(--alert); background: var(--alert-soft); border-color: transparent; }
+/* No overflow:hidden here on purpose: .task__assignee/.taskdue are
+   flex: none (never shrink), so on a card that ends up narrower than a
+   row's full content width, something has to give. With overflow:hidden
+   that "something" was the assignee name getting silently clipped off the
+   edge (confirmed live: avatar visible, name invisible) instead of
+   visibly wrapping. .task's own flex-wrap below is the real fix (let
+   the row wrap instead of overflow), this is just not compounding it. */
+.taskgroup__card { background: var(--surface); border: 1px solid var(--surface); border-radius: var(--r-card); box-shadow: var(--shadow); padding: 4px 20px; }
+.taskgroup__card--hot { border-left: 4px solid var(--alert); border-radius: 18px var(--r-card) var(--r-card) 18px; }
+
+.task {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  width: 100%;
+  border: none;
+  background: none;
+  text-align: left;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--hairline);
+}
+.task:last-child { border-bottom: none; }
+.task__body { flex: 1; min-width: 0; }
+.task__title { font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.task__meta { display: flex; align-items: center; gap: 10px; margin-top: 4px; flex-wrap: wrap; }
+.task__assignee { display: flex; align-items: center; gap: 8px; flex: none; min-width: 150px; }
+.task__assignee span { font-size: 12.5px; color: var(--ink); white-space: nowrap; }
+@media (max-width: 900px) { .task__assignee { display: none; } }
+.taskdue {
+  flex: none;
+  font-size: 12.5px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  border-radius: var(--r-pill);
+  padding: 5px 12px;
+  white-space: nowrap;
+  text-align: center;
+}
+.taskdue--overdue { color: #fff; background: linear-gradient(90deg, var(--alert), color-mix(in srgb, var(--alert), black 15%)); }
+.taskdue--tomorrow { color: var(--warn); background: var(--warn-soft); }
+.taskdue--soon { color: var(--accent-2); background: var(--accent-2-soft); }
+.taskdue--later { color: var(--muted); background: var(--surface-2); }
+
+/* ---------- Seating Chart ---------- */
+/* Same horizontal-scroll-with-a-wider-inner-canvas trick the month calendar
+   uses (.month-card__scroll/.month-card__inner): the canvas itself gets a
+   real min-width instead of being squeezed to the viewport, so tables keep
+   room to breathe on a phone and you scroll to see the rest. */
+.seatcanvas__scroll { overflow-x: auto; border-radius: var(--r-card); }
+.seatcanvas {
+  position: relative;
+  min-width: 720px;
+  min-height: 560px;
+  border-radius: var(--r-card);
+  border: 1px dashed var(--hairline);
+  background:
+    radial-gradient(circle, var(--hairline) 1px, transparent 1px) 0 0 / 22px 22px,
+    var(--surface);
+  overflow: auto;
+  touch-action: none;
+}
+.seatroom {
+  position: absolute;
+  width: 132px;
+  height: 132px;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  user-select: none;
+}
+.seatroom--dragging { cursor: grabbing; z-index: 5; filter: drop-shadow(var(--shadow)); }
+.seatroom__shape {
+  position: absolute;
+  inset: 26px;
+  background: var(--surface-2);
+  border: 1.5px solid var(--hairline);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 4px;
+  gap: 2px;
+}
+.seatroom__shape--round { border-radius: 50%; }
+.seatroom__shape--rectangle { border-radius: 14px; }
+.seatroom__name { font-size: 11.5px; font-weight: 800; line-height: 1.2; }
+.seatroom__count { font-size: 10px; color: var(--muted); font-weight: 600; }
+.seat {
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  display: grid;
+  place-items: center;
+  font-size: 10.5px;
+  font-weight: 800;
+  color: #fff;
+  box-shadow: var(--shadow-sm);
+}
+.seat--empty {
+  background: var(--surface);
+  border: 1.5px dashed var(--hairline);
+  color: var(--muted);
+}
+.seat--filled { border: 2px solid var(--surface); }
+
+.guestlist { display: flex; flex-direction: column; gap: 8px; }
+.guestrow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--r-input);
+  background: var(--surface-2);
+}
+.guestrow__avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 10.5px;
+  font-weight: 800;
+  color: #fff;
+  flex: none;
+}
+.guestrow__body { flex: 1; min-width: 0; }
+.guestrow__name { font-weight: 700; font-size: 13.5px; }
+.guestrow__meta { font-size: 11.5px; color: var(--muted); }
+
+/* ---------- Coach Tour ---------- */
+.tour { position: fixed; inset: 0; z-index: 70; }
+.tour__scrim { position: fixed; inset: 0; background: var(--scrim); animation: fade-in 200ms var(--ease); }
+.tour__spot {
+  position: fixed;
+  z-index: 71;
+  border-radius: 16px;
+  box-shadow: 0 0 0 2px var(--accent), 0 0 0 9999px var(--scrim);
+  pointer-events: none;
+  transition: all 250ms var(--ease);
+}
+.tour__card {
+  position: fixed;
+  left: 50%;
+  bottom: calc(var(--sp-5) + var(--safe-bottom));
+  transform: translateX(-50%);
+  width: calc(100% - var(--sp-4) * 2);
+  max-width: 380px;
+  z-index: 72;
+  background: var(--surface);
+  border-radius: var(--r-card);
+  box-shadow: var(--shadow);
+  padding: var(--sp-4);
+  animation: sheet-in 280ms var(--ease);
+}
+.tour__dots { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: var(--sp-3); }
+.tour__dot { width: 6px; height: 6px; border-radius: 50%; background: var(--hairline); }
+.tour__dot--on { background: var(--accent); width: 16px; border-radius: 3px; }
+.tour__title { font-family: var(--font-display); font-size: 17px; font-weight: 700; margin-bottom: 4px; }
+.tour__body { font-size: 14px; color: var(--muted); margin: 0 0 var(--sp-4); line-height: 1.45; }
+.tour__grip {
+  width: 40px;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--hairline);
+  margin: -2px auto 10px;
+  cursor: grab;
+  touch-action: none;
+}
+.tour__grip:active { cursor: grabbing; background: var(--muted); }
+.tour__actions { display: flex; justify-content: space-between; align-items: center; gap: var(--sp-3); }
+.tour__actions-right { display: flex; align-items: center; gap: var(--sp-3); }
+.tour__actions .btn { width: auto; padding: 10px 20px; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+}
