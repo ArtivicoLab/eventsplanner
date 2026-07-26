@@ -203,11 +203,11 @@ const STEPS: TourStep[] = [
   {
     target: "guests-list",
     route: "guests",
-    title: "Grouped by event, sorted by arrival",
+    title: "Grouped by table, event by event",
     body:
-      "Guests are grouped under their event and ordered by arrival time, so each event reads like a" +
-      " timeline of who shows up when. Tap a guest to edit them. \"Open seating\" jumps to that event's" +
-      " floor plan to place them.",
+      "Each event's guests are grouped by table, with seat number and arrival time at a glance — and" +
+      " anyone not yet placed lands in its own \"Needs a seat\" group with a quick Assign seat button." +
+      " Tap a guest to edit them, or \"Open seating\" to jump to that event's floor plan.",
   },
   {
     target: "guests-filter",

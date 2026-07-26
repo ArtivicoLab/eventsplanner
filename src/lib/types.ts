@@ -71,7 +71,7 @@ export interface Expense {
   updatedAt: string;
 }
 
-export type RoomShape = "round" | "rectangle";
+export type RoomShape = "round" | "square" | "rectangle";
 
 /** A room (a table/pod of seats) on an event's Seating Chart. Seats around
     it are computed, not stored — see lib/seating.ts's

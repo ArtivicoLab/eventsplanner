@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useRoute } from "./router";
 import { Header } from "./components/Header";
+import { LiveTicker } from "./components/LiveTicker";
 import { TabBar } from "./components/TabBar";
 import { Sidebar } from "./components/Sidebar";
 import { DemoBanner } from "./components/DemoBanner";
@@ -69,6 +70,7 @@ export default function App() {
         </main>
       </div>
       <TabBar active={route} />
+      <LiveTicker />
       <UpdatePrompt />
       <Toaster />
       <ConfirmHost />

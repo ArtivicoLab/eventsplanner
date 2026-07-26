@@ -110,6 +110,74 @@ img { max-width: 100%; display: block; }
 .appbar__tour { display: none; }
 @media (min-width: 900px) { .appbar { display: none; } }
 
+/* ---------- floating live ticker (mobile) ----------
+   NOT part of the page flow: floats in the bottom-right corner, in front of
+   every screen's content, rows stacking upward from a close button anchored
+   at the bottom (three iterations to land here: a full-width scrolling bar
+   under the header, then a top-right pill/card badge, then this — "on the
+   right bottom corner going up just the same way as the left panel but just
+   text without the panel showing on top of everything"). The desktop
+   Sidebar's own feed rows (.sidebar__feedrow) have no background of their
+   own either, just plain text over the sidebar's panel — same idea here,
+   just plain text with no shadow either, floating directly over whatever's
+   underneath. Same rotating window of rows the Sidebar shows, just
+   anchored bottom-right instead of living in a side panel. z-index 45:
+   above the tab bar (30) and its edit
+   bar (40) so it's truly in front of normal content, but below the sheet
+   scrim (50) so opening any bottom sheet still covers it. Bottom offset
+   matches .toaster's (84px + safe-bottom) so it clears the tab bar the same
+   way toasts already do. Hidden entirely on desktop (>=900px), where the
+   Sidebar's own feed already covers the job. */
+.liveticker {
+  position: fixed;
+  right: 14px;
+  bottom: calc(84px + var(--safe-bottom));
+  z-index: 45;
+  max-width: min(220px, calc(100vw - 28px));
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: flex-end;
+  gap: 6px;
+}
+@media (min-width: 900px) { .liveticker { display: none; } }
+.liveticker__item {
+  display: block;
+  max-width: 100%;
+  font-size: 12.5px;
+  text-align: right;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  animation: liveticker-in 320ms var(--ease) backwards;
+}
+@media (prefers-reduced-motion: reduce) { .liveticker__item { animation: none; } }
+@keyframes liveticker-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+.liveticker__livedot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 5px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: now-pulse 2s infinite;
+}
+@media (prefers-reduced-motion: reduce) { .liveticker__livedot { animation: none; } }
+.liveticker__name { font-weight: 800; }
+.liveticker__msg { color: var(--ink); margin-left: 5px; }
+.liveticker__close {
+  flex: none;
+  border: none;
+  background: none;
+  padding: 2px;
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+}
+.liveticker__close:hover { color: var(--accent); }
+
 .brand-demo {
   font-family: var(--font);
   font-size: 10px;
@@ -932,9 +1000,28 @@ img { max-width: 100%; display: block; }
    of how many bars it holds, matching the reference mockup exactly. */
 .calweek { position: relative; display: grid; grid-template-columns: repeat(7, 1fr); height: 130px; border-bottom: 1px solid var(--hairline); }
 .calweek:last-child { border-bottom: none; }
-.calcell { border-right: 1px solid var(--hairline); padding: 8px 9px; position: relative; }
+/* A <button> now (clicking an empty day opens Add Event pre-filled with that
+   date), so it needs the usual native-button resets on top of its own look. */
+.calcell {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  border: none;
+  border-right: 1px solid var(--hairline);
+  border-radius: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  padding: 8px 9px;
+  position: relative;
+}
 .calcell:last-child { border-right: none; }
+.calcell:hover { background: var(--accent-soft); }
 .calcell--wknd { background: color-mix(in srgb, var(--accent-soft) 45%, transparent); }
+.calcell--wknd:hover { background: color-mix(in srgb, var(--accent-soft) 70%, transparent); }
+.calcell--today:hover { filter: brightness(0.97); }
 .calcell--out { opacity: 0.42; }
 .calcell__num {
   width: 26px;
@@ -1322,8 +1409,6 @@ img { max-width: 100%; display: block; }
 }
 .seatroom {
   position: absolute;
-  width: 132px;
-  height: 132px;
   transform: translate(-50%, -50%);
   display: flex;
   align-items: center;
@@ -1331,10 +1416,18 @@ img { max-width: 100%; display: block; }
   cursor: grab;
   user-select: none;
 }
+/* A round or square table's box is a plain square (a circle needs equal
+   width/height, and square is just that box with soft corners instead); a
+   rectangle table's box is genuinely wider than tall, like a real banquet
+   table — seatPositions' xPct/yPct are plain percentages of this box so they
+   place correctly either way with no math changes, but
+   SQUARE_FIXED_INSET_PCT/RECT_FIXED_INSET_PCT in lib/seating.ts assume the
+   shape insets below, so keep them in sync if either changes. */
+.seatroom--round, .seatroom--square { width: 132px; height: 132px; }
+.seatroom--rectangle { width: 176px; height: 116px; }
 .seatroom--dragging { cursor: grabbing; z-index: 5; filter: drop-shadow(var(--shadow)); }
 .seatroom__shape {
   position: absolute;
-  inset: 26px;
   background: var(--surface-2);
   border: 1.5px solid var(--hairline);
   display: flex;
@@ -1345,8 +1438,9 @@ img { max-width: 100%; display: block; }
   padding: 4px;
   gap: 2px;
 }
-.seatroom__shape--round { border-radius: 50%; }
-.seatroom__shape--rectangle { border-radius: 14px; }
+.seatroom__shape--round { inset: 26px; border-radius: 50%; }
+.seatroom__shape--square { inset: 26px; border-radius: 14px; }
+.seatroom__shape--rectangle { top: 16px; bottom: 16px; left: 25px; right: 25px; border-radius: 14px; }
 .seatroom__name { font-size: 11.5px; font-weight: 800; line-height: 1.2; }
 .seatroom__count { font-size: 10px; color: var(--muted); font-weight: 600; }
 .seat {
@@ -1392,6 +1486,41 @@ img { max-width: 100%; display: block; }
 .guestrow__body { flex: 1; min-width: 0; }
 .guestrow__name { font-weight: 700; font-size: 13.5px; }
 .guestrow__meta { font-size: 11.5px; color: var(--muted); }
+
+/* ---------- Guests page (table-grouped roster) ---------- */
+.chipcount {
+  font-size: 11px;
+  font-weight: 700;
+  background: var(--surface-2);
+  color: var(--muted);
+  border-radius: var(--r-pill);
+  padding: 2px 7px;
+}
+.chip--on .chipcount { background: rgba(255, 255, 255, 0.25); color: #fff; }
+
+.eventhead { display: flex; align-items: baseline; gap: 12px; margin: 0 4px 14px; flex-wrap: wrap; }
+.eventhead h2 { font-family: var(--font-display); font-weight: 600; font-size: 22px; }
+.eventhead__count { font-size: 13px; color: var(--muted); }
+.eventhead__progress { margin-left: auto; display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--muted); }
+.eventhead__bar { width: 120px; height: 6px; border-radius: var(--r-pill); background: var(--surface-2); overflow: hidden; }
+.eventhead__bar i { display: block; height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent-2)); border-radius: var(--r-pill); }
+
+/* One card per table, not one big card per event — mirrors how Seating
+   itself organizes guests, so "Head Table" here and "Head Table" on the
+   floor plan read as the same concept. */
+.tablegroup { background: var(--surface); border: 1px solid var(--surface); border-radius: var(--r-card); box-shadow: var(--shadow-sm); margin-bottom: var(--sp-3); overflow: hidden; }
+.tablegroup__head { display: flex; align-items: center; gap: 12px; padding: 14px 20px; border-bottom: 1px solid var(--hairline); background: var(--surface-2); flex-wrap: wrap; }
+.tablegroup__name { font-weight: 700; font-size: 14px; }
+.tablegroup__meta { font-size: 12px; color: var(--muted); }
+.tablegroup__time { margin-left: auto; font-size: 11.5px; font-weight: 650; color: var(--accent-2); background: var(--accent-2-soft); padding: 4px 11px; border-radius: var(--r-pill); white-space: nowrap; }
+.tablegroup__rows { padding: 0 20px; }
+.tablegroup--unseated { border: 1.5px dashed var(--hairline); box-shadow: none; }
+.tablegroup--unseated .tablegroup__head { background: none; }
+.tablegroup--unseated .tablegroup__time { color: var(--warn); background: var(--warn-soft); }
+
+.guestfoot { display: flex; align-items: center; gap: 14px; background: var(--surface-2); border: 1px solid var(--hairline); border-radius: var(--r-input); padding: 12px 18px; margin-bottom: var(--sp-5); }
+.guestfoot__txt { font-size: 13px; color: var(--muted); }
+.guestfoot__txt b { color: var(--ink); }
 
 /* ---------- Coach Tour ---------- */
 .tour { position: fixed; inset: 0; z-index: 70; }

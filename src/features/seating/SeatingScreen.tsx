@@ -345,7 +345,7 @@ export function SeatingScreen() {
               return (
                 <div
                   key={room.id}
-                  className={`seatroom${drag?.roomId === room.id ? " seatroom--dragging" : ""}`}
+                  className={`seatroom seatroom--${room.shape}${drag?.roomId === room.id ? " seatroom--dragging" : ""}`}
                   style={{ left: `${live.x}%`, top: `${live.y}%` }}
                 >
                   <div
@@ -686,6 +686,7 @@ function RoomFormSheet({
         <Segmented
           options={[
             { value: "round", label: "Round" },
+            { value: "square", label: "Square" },
             { value: "rectangle", label: "Rectangle" },
           ]}
           value={shape}

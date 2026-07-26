@@ -102,7 +102,7 @@ export function CalendarScreen() {
   const [flashDate, setFlashDate] = useState<string | null>(() =>
     linkedDate && isValidISO(linkedDate) ? linkedDate : null
   );
-  const flashRef = useRef<HTMLDivElement>(null);
+  const flashRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     if (!flashDate) return;
@@ -115,6 +115,15 @@ export function CalendarScreen() {
   const [selectedCats, setSelectedCats] = useState<string[]>(() => [...categories]);
   const [hideDone, setHideDone] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
+  // Which date to prefill the add sheet with — set when a day cell is
+  // clicked directly; null means "no override", so EventSheet falls back to
+  // today (the top Add Event button's existing behavior).
+  const [addDate, setAddDate] = useState<string | null>(null);
+
+  function openAddOn(date: string) {
+    setAddDate(date);
+    setAddOpen(true);
+  }
 
   const today = todayISO();
   const gridDates = useMemo(() => monthGridISO(anchor, weekStart), [anchor, weekStart]);
@@ -214,7 +223,10 @@ export function CalendarScreen() {
           className="btn btn--primary btn--auto"
           style={{ marginLeft: "auto" }}
           data-tour="cal-add"
-          onClick={() => setAddOpen(true)}
+          onClick={() => {
+            setAddDate(null);
+            setAddOpen(true);
+          }}
         >
           <IconPlus width={16} height={16} /> Add Event
         </button>
@@ -275,17 +287,20 @@ export function CalendarScreen() {
               {week.dates.map((d, i) => {
                 const isToday = isTodayISO(d, today);
                 return (
-                  <div
+                  <button
                     key={d}
+                    type="button"
                     ref={d === flashDate ? flashRef : undefined}
                     className={`calcell${!inSameMonth(d, anchor) ? " calcell--out" : ""}${
                       isWeekendISO(d) ? " calcell--wknd" : ""
                     }${isToday ? " calcell--today" : ""}${d === flashDate ? " calcell--flash" : ""}`}
                     style={{ gridColumn: i + 1 }}
+                    aria-label={`Add event on ${format(fromISO(d), "MMMM d")}`}
+                    onClick={() => openAddOn(d)}
                   >
                     <span className="calcell__num">{dayNum(d)}</span>
                     {isToday && <span className="calcell--today__label">Today</span>}
-                  </div>
+                  </button>
                 );
               })}
 
@@ -396,7 +411,12 @@ export function CalendarScreen() {
         </aside>
       </div>
 
-      <EventSheet open={addOpen} eventId={null} onClose={() => setAddOpen(false)} />
+      <EventSheet
+        open={addOpen}
+        eventId={null}
+        initialDate={addDate ?? undefined}
+        onClose={() => setAddOpen(false)}
+      />
     </div>
   );
 }

@@ -16,6 +16,9 @@ import { PRIORITY_LABEL } from "../../lib/ui";
 interface Props {
   open: boolean;
   eventId: string | null;
+  /** Prefills a new event's start (and end) date — e.g. clicking a day on
+      the calendar. Ignored when editing an existing event. */
+  initialDate?: string;
   onClose: () => void;
 }
 
@@ -28,7 +31,7 @@ function withExtra(list: string[], current: string): string[] {
   return [...list, current];
 }
 
-export function EventSheet({ open, eventId, onClose }: Props) {
+export function EventSheet({ open, eventId, initialDate, onClose }: Props) {
   const { items: events, add: addEvent, update: updateEvent, remove: removeEvent } = useEvents();
   const { items: eventTasks, remove: removeEventTask } = useEventTasks();
   const { items: expenses, remove: removeExpense } = useExpenses();
@@ -80,12 +83,13 @@ export function EventSheet({ open, eventId, onClose }: Props) {
       setDetails(editingEvent.details);
       setNotes(editingEvent.notes);
     } else {
+      const d = initialDate ?? todayISO();
       setName("");
       setCategory(settings.categories[0] ?? "");
       setType(settings.eventTypes[0] ?? "");
-      setStartDate(todayISO());
+      setStartDate(d);
       setStartTime("");
-      setEndDate(todayISO());
+      setEndDate(d);
       setEndTime("");
       setMarketRegion("");
       setLocation("");
@@ -98,7 +102,7 @@ export function EventSheet({ open, eventId, onClose }: Props) {
       setNotes("");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, eventId]);
+  }, [open, eventId, initialDate]);
 
   const categoryOptions = withExtra(settings.categories, category);
   const typeOptions = withExtra(settings.eventTypes, type);

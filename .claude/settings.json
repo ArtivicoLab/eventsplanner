@@ -15,7 +15,10 @@
       "Bash(ln -sfn /Users/gradikayamba/.npm/_npx/6f4879659183bc49/node_modules node_modules)",
       "Bash(node pw-check.mjs)",
       "Bash(node pw-seating.mjs)",
-      "Bash(git add *)"
+      "Bash(lsof -ti:5518 -sTCP:LISTEN)",
+      "Bash(xargs -r kill)",
+      "Bash(node pw-seating2.mjs)",
+      "Bash(lsof -ti:5518)"
     ]
   }
 }
