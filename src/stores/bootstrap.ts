@@ -103,7 +103,7 @@ export async function activate(code: string): Promise<UnlockResult> {
 export async function resetEverything() {
   setDemoFlag(false);
   db.setDbDemoMode(false);
-  await db.wipeAll();
+  await db.wipeCollections();
   useEvents.getState().setAll([]);
   useEventTasks.getState().setAll([]);
   useExpenses.getState().setAll([]);

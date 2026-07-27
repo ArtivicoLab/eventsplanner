@@ -90,9 +90,6 @@ img { max-width: 100%; display: block; }
   align-items: center;
   gap: var(--sp-2);
   padding: calc(var(--sp-3) + var(--safe-top)) var(--sp-4) var(--sp-3);
-  position: sticky;
-  top: 0;
-  z-index: 20;
   background: color-mix(in srgb, var(--bg) 88%, transparent);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid var(--hairline);
@@ -106,11 +103,7 @@ img { max-width: 100%; display: block; }
   gap: 8px;
 }
 .appbar__brandimg { border-radius: 6px; box-shadow: 0 4px 12px color-mix(in srgb, var(--accent) 30%, transparent); }
-/* The brand mark doubles as the live-ticker on/off toggle on mobile — tap
-   the "E" to turn it back on after closing it, same idea as the ticker's
-   own close button but reachable even after the ticker itself is gone. */
 .appbar__brandbtn { border: none; background: none; padding: 0; display: flex; cursor: pointer; }
-.appbar__brandbtn--off .appbar__brandimg { opacity: 0.45; filter: grayscale(70%); box-shadow: none; }
 .appbar__spacer { flex: 1; }
 .appbar__tour { display: none; }
 @media (min-width: 900px) { .appbar { display: none; } }
@@ -401,8 +394,12 @@ img { max-width: 100%; display: block; }
   backdrop-filter: blur(10px);
   border-top: 1px solid var(--hairline);
 }
-.tabbar__brandbtn { border: none; background: none; padding: 4px; flex: none; }
+/* The brand mark doubles as the live-ticker on/off toggle on mobile — tap
+   the "E" to turn it back on after closing it, same idea as the ticker's
+   own close button but reachable even after the ticker itself is gone. */
+.tabbar__brandbtn { border: none; background: none; padding: 4px; flex: none; cursor: pointer; }
 .tabbar__brand { border-radius: 7px; box-shadow: 0 4px 12px color-mix(in srgb, var(--accent) 30%, transparent); }
+.tabbar__brandbtn--off .tabbar__brand { opacity: 0.45; filter: grayscale(70%); box-shadow: none; }
 .tabbar__scroll { display: flex; flex: 1; overflow-x: auto; gap: 2px; }
 .tabbar__btn {
   flex: 1;

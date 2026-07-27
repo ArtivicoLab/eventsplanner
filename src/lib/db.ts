@@ -84,3 +84,12 @@ export async function wipeAll(): Promise<void> {
   const d = await db();
   await Promise.all([...ALL_COLLECTIONS, "kv"].map((s) => d.clear(s as never)));
 }
+
+// "Start over" only promises to erase planner content (events/tasks/expenses/
+// rooms/guests) — unlike wipeAll(), this leaves the `kv` store (Settings:
+// categories, owners, currency, activation/access code) untouched, so a
+// buyer's device-level setup and purchased status survive a reset.
+export async function wipeCollections(): Promise<void> {
+  const d = await db();
+  await Promise.all(ALL_COLLECTIONS.map((s) => d.clear(s as never)));
+}

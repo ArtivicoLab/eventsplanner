@@ -78,6 +78,13 @@ function setSpreadsheetId(id: string) {
 }
 
 const SYNC_TABS = [TAB.Events, TAB.EventTasks, TAB.Expenses, TAB.Rooms, TAB.Guests];
+// Every tab a fresh/relinked sheet needs, including Meta — kept separate from
+// SYNC_TABS because Meta isn't a per-collection data tab (tabValues() has no
+// case for it, and pushAll/pushDirty writing it via the generic collection
+// loop would clobber it with an empty sheet instead of merging keys the way
+// writeMetaKey() does). Only used where tabs get CREATED; push/pull/dirty-
+// tracking keep using SYNC_TABS.
+const ALL_TABS = [...SYNC_TABS, TAB.Meta];
 
 // Maps an IndexedDB collection to the single Sheet tab it lives in — lets a
 // mutation push just its own tab instead of rewriting every tab on every edit.
@@ -374,7 +381,7 @@ export async function connect(): Promise<string> {
   const existing = getSpreadsheetId();
   if (existing) {
     try {
-      await ensureTabs(existing, SYNC_TABS, true);
+      await ensureTabs(existing, ALL_TABS, true);
       localStorage.removeItem(LS_DISCONNECTED);
       // Push local changes UP before pulling the sheet down. This device may
       // have kept working (safely, in IndexedDB) through a stretch where the
@@ -403,7 +410,7 @@ export async function connect(): Promise<string> {
       }
     }
   }
-  const id = await createSpreadsheet(SPREADSHEET_TITLE, SYNC_TABS, true);
+  const id = await createSpreadsheet(SPREADSHEET_TITLE, ALL_TABS, true);
   setSpreadsheetId(id);
   await pushAll(true); // seed the new sheet with whatever is on-device now
   await syncAccessCode(id, true);
@@ -419,7 +426,7 @@ export async function connect(): Promise<string> {
  */
 export async function createNewSheet(): Promise<string> {
   await requestToken(true);
-  const id = await createSpreadsheet(SPREADSHEET_TITLE, SYNC_TABS, true);
+  const id = await createSpreadsheet(SPREADSHEET_TITLE, ALL_TABS, true);
   abandonRememberedSheet();
   setSpreadsheetId(id);
   await pushAll(true);
@@ -448,7 +455,7 @@ export async function relink(idOrUrl: string): Promise<void> {
     const { setDemoMode } = await import("../stores/bootstrap");
     await setDemoMode(false);
   }
-  await ensureTabs(id, SYNC_TABS, true);
+  await ensureTabs(id, ALL_TABS, true);
   setSpreadsheetId(id);
   await pull(true);
   await syncAccessCode(id, true);

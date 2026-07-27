@@ -39,7 +39,11 @@ export function LiveTicker() {
   if (!on || visible.length === 0) return null;
 
   return (
-    <div className="liveticker" data-tour="live-ticker">
+    // Same data-tour key as the desktop Sidebar's live feed section — the
+    // "sidebar-live" CoachTour step already picks whichever chrome is
+    // actually on screen at the current width (see CoachTour's findTarget),
+    // same pattern nav items use between Sidebar and TabBar.
+    <div className="liveticker" data-tour="sidebar-live">
       <button
         className="liveticker__close"
         onClick={turnOff}

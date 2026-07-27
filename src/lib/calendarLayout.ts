@@ -11,7 +11,7 @@
 // real desk calendar does.
 
 import type { EventItem } from "./types";
-import { rangesOverlap } from "./dates";
+import { daysBetween, rangesOverlap } from "./dates";
 
 export interface EventBar {
   event: EventItem;
@@ -48,21 +48,26 @@ export function layoutMonthEvents(events: EventItem[], gridDates: string[], maxL
   // otherwise a 4-day event could get pushed to lane 2 by two 1-day events
   // that each individually started earlier that same morning.
   const sorted = [...visible].sort((a, b) => {
-    const aLen = a.endDate.localeCompare(a.startDate);
-    const bLen = b.endDate.localeCompare(b.startDate);
-    if (aLen !== bLen) return aLen > bLen ? -1 : 1;
+    const aLen = daysBetween(a.startDate, a.endDate);
+    const bLen = daysBetween(b.startDate, b.endDate);
+    if (aLen !== bLen) return bLen - aLen;
     if (a.startDate !== b.startDate) return a.startDate < b.startDate ? -1 : 1;
     return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
   });
 
-  // Greedy lane assignment: give each event the lowest-numbered lane whose
-  // current occupant already ends strictly before this event starts.
-  const laneLastEnd: string[] = []; // lane index -> end date of its current occupant
+  // Greedy lane assignment: give each event the lowest-numbered lane none of
+  // whose current occupants overlap it. Checking every occupant already in a
+  // lane (not just the most recently added one) matters because `sorted`
+  // isn't chronological — a short event processed after a longer one it
+  // doesn't actually overlap still needs to be able to slot into that lane.
+  const laneOccupants: { startDate: string; endDate: string }[][] = [];
   const laneOf = new Map<string, number>();
   for (const e of sorted) {
-    let lane = laneLastEnd.findIndex((end) => e.startDate > end);
-    if (lane === -1) lane = laneLastEnd.length;
-    laneLastEnd[lane] = e.endDate < gridEnd ? e.endDate : gridEnd;
+    let lane = laneOccupants.findIndex((occupants) =>
+      occupants.every((o) => e.endDate < o.startDate || e.startDate > o.endDate)
+    );
+    if (lane === -1) lane = laneOccupants.length;
+    (laneOccupants[lane] ??= []).push({ startDate: e.startDate, endDate: e.endDate });
     laneOf.set(e.id, lane);
   }
 

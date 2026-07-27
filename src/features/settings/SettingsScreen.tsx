@@ -217,7 +217,9 @@ export function SettingsScreen() {
   async function handleStartOver() {
     const ok = await confirmDialog({
       title: "Erase everything?",
-      message: "This deletes every event, task, and expense on this device. This can't be undone.",
+      message:
+        "This deletes every event, task, expense, seating chart, and guest on this device. This can't be undone." +
+        " Your Quick Setup lists and access code are kept.",
       confirmLabel: "Erase everything",
       danger: true,
     });
@@ -582,7 +584,9 @@ export function SettingsScreen() {
           <div className="fs-13" style={{ fontWeight: 700, marginBottom: 4 }}>
             Start over
           </div>
-          <p className="muted fs-13 mb-1">Erase every event, task, and expense on this device. This can't be undone.</p>
+          <p className="muted fs-13 mb-1">
+            Erase every event, task, expense, seating chart, and guest on this device. This can't be undone.
+          </p>
           <LockGatedButton label="Start over" danger onConfirm={() => void handleStartOver()} />
         </div>
         {connected && (

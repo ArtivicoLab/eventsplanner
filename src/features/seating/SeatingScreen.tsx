@@ -36,12 +36,20 @@ function hashColor(id: string): string {
 }
 
 // Cascades new rooms across the canvas instead of stacking them all on top
-// of each other at a fixed default position.
+// of each other at a fixed default position. Only a 3x3 grid of spots fits
+// the canvas before a cell has to be reused, so once every cell is taken
+// (the 10th room onward) each full 3x3 cycle nudges by a growing offset —
+// four distinct nudges before an exact repeat, instead of colliding again
+// immediately on the very next room.
 function nextRoomPosition(count: number): { x: number; y: number } {
   const cols = 3;
-  const col = count % cols;
-  const row = Math.floor(count / cols) % 3;
-  return { x: 22 + col * 28, y: 24 + row * 30 };
+  const rows = 3;
+  const cell = count % (cols * rows);
+  const generation = Math.floor(count / (cols * rows));
+  const col = cell % cols;
+  const row = Math.floor(cell / cols);
+  const jitter = (generation % 4) * 3;
+  return { x: 22 + col * 28 + jitter, y: 24 + row * 30 + jitter };
 }
 
 // ---- Preset layouts: pick one and the whole floor plan is placed for you ----
@@ -208,6 +216,12 @@ export function SeatingScreen() {
     return eventGuests.find((g) => g.roomId === roomId && g.seatIndex === seatIndex);
   }
 
+  // Shared by the live preview (onMove) and the committed position (onUp) —
+  // they used to clamp Y to different ranges, so a table dragged near the
+  // top/bottom edge would visibly snap ~2-4% the instant it was released.
+  const ROOM_X_CLAMP: [number, number] = [6, 94];
+  const ROOM_Y_CLAMP: [number, number] = [8, 92];
+
   function startDrag(room: Room, e: React.PointerEvent) {
     if (!canvasRef.current) return;
     e.currentTarget.setPointerCapture(e.pointerId);
@@ -223,8 +237,8 @@ export function SeatingScreen() {
       const dyPct = ((ev.clientY - startClientY) / rect.height) * 100;
       setDrag({
         roomId: room.id,
-        x: Math.max(6, Math.min(94, originX + dxPct)),
-        y: Math.max(8, Math.min(92, originY + dyPct)),
+        x: Math.max(ROOM_X_CLAMP[0], Math.min(ROOM_X_CLAMP[1], originX + dxPct)),
+        y: Math.max(ROOM_Y_CLAMP[0], Math.min(ROOM_Y_CLAMP[1], originY + dyPct)),
       });
     }
     function onUp(ev: PointerEvent) {
@@ -242,8 +256,8 @@ export function SeatingScreen() {
       const dxPct = ((ev.clientX - startClientX) / rect.width) * 100;
       const dyPct = ((ev.clientY - startClientY) / rect.height) * 100;
       updateRoom(room.id, {
-        x: Math.max(6, Math.min(94, originX + dxPct)),
-        y: Math.max(10, Math.min(88, originY + dyPct)),
+        x: Math.max(ROOM_X_CLAMP[0], Math.min(ROOM_X_CLAMP[1], originX + dxPct)),
+        y: Math.max(ROOM_Y_CLAMP[0], Math.min(ROOM_Y_CLAMP[1], originY + dyPct)),
       });
     }
     window.addEventListener("pointermove", onMove);

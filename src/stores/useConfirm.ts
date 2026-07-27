@@ -14,19 +14,27 @@ interface PendingConfirm extends ConfirmRequest {
 
 interface ConfirmState {
   current: PendingConfirm | null;
+  queue: PendingConfirm[];
   request: (opts: ConfirmRequest) => Promise<boolean>;
   resolve: (ok: boolean) => void;
 }
 
 export const useConfirm = create<ConfirmState>((set, get) => ({
   current: null,
+  queue: [],
   request: (opts) =>
     new Promise<boolean>((resolve) => {
-      set({ current: { ...opts, resolve } });
+      const pending: PendingConfirm = { ...opts, resolve };
+      // A request while one's already showing queues instead of overwriting
+      // `current` — the overwritten request's resolve() would otherwise never
+      // fire, permanently hanging whatever action was awaiting it.
+      if (get().current) set((s) => ({ queue: [...s.queue, pending] }));
+      else set({ current: pending });
     }),
   resolve: (ok) => {
     get().current?.resolve(ok);
-    set({ current: null });
+    const [next, ...rest] = get().queue;
+    set({ current: next ?? null, queue: rest });
   },
 }));
 

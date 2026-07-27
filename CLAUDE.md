@@ -33,17 +33,53 @@ they're fixes for bugs that actually shipped once, elsewhere in this app family.
   (`startDate`..`endDate`), not recurring templates. There is no `Recurrences` tab,
   no lazy-materialization concept — a much simpler data model than TrackerA's Tasks/
   Recurrences split.
-- **No Coach Tour / onboarding walkthrough.** TrackerA's spotlight-tour component
-  was a deliberate, separately-built feature added after the base app shipped, not
-  part of the core product — Event Planner doesn't have it yet. If it's wanted
-  later, port TrackerA's `CoachTour.tsx` pattern; don't half-build a new one.
 - **No "More" hub screen, no tab-bar pinning/rearranging.** TrackerA needed that
   because it has 16+ possible nav destinations that can't all fit in a bottom bar.
-  Event Planner has exactly 5 primary destinations (Dashboard, Calendar, Events,
-  Tasks, Budget) plus Settings/Privacy reached via the header avatar — all 5 fit
-  directly in `TabBar.tsx`/`Sidebar.tsx` with no hide/pin logic at all. If a future
-  version adds enough screens that this stops fitting, THEN port the pin/rearrange
-  pattern — don't build it preemptively.
+  Event Planner has 7 primary destinations (Dashboard, Calendar, Events, Seating,
+  Guests, Tasks, Budget — see `nav.tsx`) plus Settings/Privacy reached via the
+  header avatar — all 7 still fit directly in `TabBar.tsx`/`Sidebar.tsx` with no
+  hide/pin logic. If a future version adds enough screens that this stops fitting,
+  THEN port the pin/rearrange pattern — don't build it preemptively.
+
+**Added after initial ship, now real features (this file used to say Event Planner
+didn't have these — updated 2026-07-26 after they were built; if this section and
+the actual code ever disagree again, trust the code, per the general rule at the
+top of this file's Design section):**
+- **Coach Tour** (`src/components/CoachTour.tsx` + `useCoachTour.ts`) — ported from
+  TrackerA's pattern as originally planned. Spotlight-style, scoped to whatever
+  route is active the moment it opens (`STEPS` filtered by `route`), triggered via
+  `openCoachTour()`/`useCoachTourUi` or the per-screen `PageTourButton.tsx`. Steps
+  target elements by a `data-tour="..."` attribute; a step whose target isn't in
+  the DOM (e.g. a desktop-only element on a narrow viewport) is skipped via
+  `targetExists()`, not shown broken. When adding a new spotlightable element,
+  add both the `data-tour` attribute AND a matching `STEPS` entry — one without the
+  other is a real, confirmed bug (see TODO.md's LiveTicker/CoachTour item).
+- **Guests** (`src/features/guests/GuestsScreen.tsx` + `GuestSheet.tsx`,
+  `useGuests.ts`, `Guests` Sheet tab) — every guest across every event, grouped by
+  event then by table, mirroring Seating's own grouping so "Head Table" reads as
+  the same concept in both places. Guests not yet assigned a seat land in their own
+  "Needs a seat" group with a quick assign action. Guest CRUD (add/remove/edit
+  name+notes+arrival time) lives here; seat/table CRUD itself stays on Seating.
+- **Seating** (`src/features/seating/SeatingScreen.tsx`, `lib/seating.ts`,
+  `useRooms.ts`, `Rooms` Sheet tab) — a per-event floor-plan canvas: create rooms
+  (tables/pods with a shape + seat count), drag them into place, place guests
+  around individual seats. `lib/seating.ts` is pure seat-geometry math (given a
+  room's shape/seat count, returns each seat's `{xPct, yPct}` position within the
+  room's own bounding box) — no DOM, easy to unit test. **`Guest.roomId`/
+  `seatIndex` is the ONLY source of truth for occupancy** — there's no separate
+  "seat" entity to keep in sync; assigning a guest to an already-occupied seat just
+  moves that occupant's own record, no explicit vacate step anywhere (see
+  `types.ts`'s `Guest` doc comment). Known bugs: the drag preview and the committed
+  position use different clamp ranges (visible snap on release), and new-room
+  auto-placement wraps and can stack a 10th room on the 1st — both in TODO.md.
+- **LiveTicker** (`src/components/LiveTicker.tsx` + `useLiveTicker.ts`, mobile) /
+  **Sidebar's rotating feed** (desktop) — both read from one shared pool,
+  `useLiveFeed.ts`, so the two surfaces never drift into showing different things.
+  A rotating, priority-ordered mix of live/upcoming events (and their guests'
+  arrivals) and plain setup facts (sync status, open tasks, total budget), styled
+  like a livestream chat scrollback — literally requested as "chats on Kick" by the
+  owner. `useLiveTicker`'s `on` flag (mobile) is toggled from the Header's brand
+  mark; independent of `useCoachTourUi`, same "tiny UI-only zustand store" pattern.
 
 ## Git — never auto-commit or push
 Same rule as every sibling app. Do not run `git commit`, `git push`, or `git add`
@@ -53,9 +89,12 @@ silently sweep up and push another session's in-progress, unreviewed changes
 together with yours. Build, typecheck, and test freely; leave the working tree
 uncommitted for the user to review and push themselves. Being asked to commit once
 does not carry over to later turns — ask again each time. **This repo was
-intentionally left without a git repo at all as of this build** (mirroring
-TrackerD's precedent) — `git init` is the user's call, not something to do
-unprompted either.
+intentionally left without a git repo at the very start of this build** (mirroring
+TrackerD's precedent), but `git init` has since happened (owner's own call, not an
+AI-initiated one) and the repo now has real commit history — updated 2026-07-26
+after this went stale; verify with `git log` rather than trusting this prose if it
+matters. The underlying rule is unchanged regardless: still never commit/push
+without an explicit ask in that same turn.
 
 ## Version number — always real and visible
 Same rule as every sibling app: never hardcode a version string. Version comes from
@@ -70,10 +109,12 @@ remote yet; the workflow file is ready to go the moment this repo has one).
 ## What this is
 A **static, phone-first PWA** cloning an "Event Scheduler" Etsy spreadsheet listing:
 a multi-day-aware event calendar, an event tracker (list + rich detail/search view),
-a task tracker scoped per-event or global, and a budget module (per-event and
-overall budget-vs-actual plus an expense log). It is the *interface*; the user's own
-**Google Sheet is the database** (optional — the app is fully usable, offline-first,
-without ever connecting Google, exactly like every sibling app).
+a task tracker scoped per-event or global, a budget module (per-event and overall
+budget-vs-actual plus an expense log), a guest list, and a per-event seating-chart
+floor plan (rooms/tables + guest seat assignment) — see "Added after initial ship"
+above for the last two. It is the *interface*; the user's own **Google Sheet is the
+database** (optional — the app is fully usable, offline-first, without ever
+connecting Google, exactly like every sibling app).
 
 ## THE DATABASE IS THE USER'S GOOGLE SHEET (when connected) — nothing else
 Same principle as every sibling app: there is **no backend and no other database**.
@@ -235,18 +276,29 @@ not a bug to fix here.
 - Vitest for the pure logic (`calendarLayout`, `schema`).
 
 ## Architecture map
+Updated 2026-07-26 — the version below used to only list a 5-screen, no-tour build;
+Guests/Seating/LiveTicker/CoachTour existed in the actual code but not here. If this
+map and the real `src/` tree ever disagree again, trust `src/`, not this file.
 ```
 src/
   lib/
-    types.ts          domain types: EventItem, EventTask, Expense, Priority (6
-                       levels), TaskStatus (6 levels), Settings + DEFAULT_* lists
+    types.ts          domain types: EventItem, EventTask, Expense, Room, Guest,
+                       Priority (6 levels), TaskStatus (6 levels), Settings + DEFAULT_* lists
     schema.ts          SINGLE SOURCE OF TRUTH for Sheet tabs/columns + row (de)serializers
     dates.ts           ALL date math (plain ISO yyyy-mm-dd; no times except Event
                        start/end time, a free "HH:mm" field)
     calendarLayout.ts  the multi-day event bar lane-packing algorithm (see Design above)
-    db.ts               IndexedDB (one object store per collection: events, eventTasks, expenses)
+    seating.ts          pure seat-geometry math for the Seating floor plan (no DOM) —
+                       given a room's shape/seat count, returns each seat's {xPct,yPct}
+    id.ts               newId() (nanoid) / nowIso() — the two id/timestamp helpers
+                       every store's createCrud() factory uses
+    db.ts               IndexedDB (one object store per collection: events, eventTasks,
+                       expenses, rooms, guests, plus the shared "kv" store for settings/
+                       activation/lockout state)
     sync.ts             Sheets pull / push-all / debounced flush / connect (ported from
-                       TrackerA's fixed version — 3 sync tabs instead of 16)
+                       TrackerA's fixed version). NOTE: TAB.Meta ("Settings") is
+                       currently MISSING from SYNC_TABS — a confirmed, unfixed bug,
+                       see TODO.md — so cross-device access-code sync doesn't actually work yet.
     google/
       auth.ts           GIS token client (drive.file scope ONLY, no Calendar)
       sheets.ts         REST wrapper: create / batchGet / writeTab (clear+update)
@@ -254,23 +306,37 @@ src/
     sample.ts           first-run sample data (a realistic slate of events/tasks/expenses)
     access.ts           Etsy access-code gate + brute-force throttle (see above)
     demo.ts             demo-mode flag (memory-only sample data, never persisted)
+    appUpdate.ts         tracks whether a newer deployed build is waiting (service-worker
+                       controllerchange), backs UpdatePrompt.tsx
     config.ts           DB_NAME/VERSION, LOCAL_MODE flag, APP_VERSION/BUILD_SHA
-  stores/                zustand: useEvents, useEventTasks, useExpenses (all via crud.ts),
-                       useSettings, useSync, useConfirm, useToast, useInstall,
-                       bootstrap.ts (hydrate + seed + migrate)
+  stores/                zustand: useEvents, useEventTasks, useExpenses, useGuests,
+                       useRooms (all via crud.ts), useSettings, useSync, useConfirm,
+                       useToast, useInstall, useLiveFeed (the shared rotating-feed data
+                       pool behind both Sidebar's desktop panel and mobile LiveTicker),
+                       useLiveTicker (mobile on/off UI flag), useCoachTour (tour-open UI
+                       flag), bootstrap.ts (hydrate + seed + migrate)
   components/            ProgressRing, Charts, BottomSheet, Chip, Segmented, Checkbox,
-                       EmptyState, CountUp, TabBar, Sidebar, Header, LockGatedButton,
-                       DemoBanner, ReconnectBanner, UpdatePrompt, icons.tsx
+                       Toggle, EmptyState, CountUp, TabBar, Sidebar, Header, LockGatedButton,
+                       DemoBanner, ReconnectBanner, UpdatePrompt, ConfirmDialog.tsx (exports
+                       ConfirmHost — the one confirmDialog() renderer), Toast.tsx,
+                       LiveTicker (mobile rotating feed), CoachTour (spotlight tour overlay),
+                       PageTourButton (per-screen "take the tour" trigger), icons.tsx
   features/
     dashboard/          DashboardScreen — stat tiles, mini calendar, charts, upcoming lists
     calendar/           CalendarScreen — the signature multi-day-bar month calendar
     events/             EventsScreen (Event Tracker list), EventSheet (add/edit form),
                        EventDetailScreen (Event Search — full detail + per-event tasks/expenses)
+    seating/             SeatingScreen — per-event floor plan: create/drag rooms (tables),
+                       place guests on individual seats; Guest.roomId/seatIndex is the
+                       only occupancy source of truth, no separate "seat" entity
+    guests/               GuestsScreen (every guest, grouped by event then table, plus an
+                       unseated group), GuestSheet (add/edit)
     tasks/               TasksScreen (global Task Tracker), TaskSheet
     budget/               BudgetScreen (global Event Budget + expense log), ExpenseSheet
     settings/            SettingsScreen — Setup lists, Google connect, access code, Danger Zone
     privacy/             PrivacyScreen
-  nav.tsx                 SINGLE nav config consumed by Sidebar + TabBar (5 fixed items, see above)
+  nav.tsx                 SINGLE nav config consumed by Sidebar + TabBar (7 fixed items:
+                       Dashboard/Calendar/Events/Seating/Guests/Tasks/Budget, see above)
   router.ts               tiny hash router (Route union type lists every route)
   App.tsx                 shell: Sidebar (desktop) + Header + <main> + TabBar (mobile)
 tests/                    calendarLayout / schema
@@ -280,12 +346,19 @@ tests/                    calendarLayout / schema
 - `schema.ts` defines every tab + column order. Row 1 is an app-written header.
 - Records keyed by `id` (col A, nanoid) — NEVER by row position. Tolerate extra
   user columns, reordered/blank rows.
-- Tabs: **Settings** (key/value, carries the access code cross-device), **Events**,
-  **Task Tracker** (EventTask), **Expenses**. Only 3 tabs actually sync per-collection
-  data — a much smaller surface than TrackerA's 16, so the per-tab dirty-tracking
+- Tabs (`schema.ts`'s `TAB`): **Settings** (key/value — SUPPOSED to carry the access
+  code cross-device, but currently doesn't, see below), **Events**, **Task Tracker**
+  (EventTask), **Expenses**, **Rooms** (Seating), **Guests**. Updated 2026-07-26: this
+  used to say "only 3 tabs," written before Rooms/Guests existed — 6 tabs total now.
+  Still a much smaller surface than TrackerA's 16, so the per-tab dirty-tracking
   machinery ported from TrackerA is arguably more headroom than this app currently
   needs, but it's kept because it's the correct, already-debugged pattern, and this
-  app WILL grow (see TODO.md).
+  app WILL grow (see TODO.md). **CONFIRMED BUG, 2026-07-26, unfixed:** `sync.ts`'s
+  `SYNC_TABS` omits `TAB.Meta`, so the Settings tab is never actually created in a
+  buyer's Sheet — `syncAccessCode()`'s reads/writes both silently fail (caught and
+  swallowed), meaning cross-device access-code sync doesn't work at all yet, defeating
+  part of what `relink()` is supposed to do. See TODO.md's "Confirmed bugs" section
+  for the fix (add `TAB.Meta` to `SYNC_TABS`).
 - Setup lists (`Settings.categories`, `eventTypes`, `marketRegions`, `states`,
   `owners`, `eventStatuses`, `eventStatusIcons`) are **local-only, per device** —
   same as TrackerA's `categories`/`categoryColors`, they live in IndexedDB's `kv`

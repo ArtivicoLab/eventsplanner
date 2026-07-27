@@ -1,7 +1,7 @@
 // Event Tracker: the filterable, searchable list of every event, styled as
 // a grid of "invitation" cards (see first-love-events.html, the owner's
 // reference mockup this screen is ported from).
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Chip, ChipRow } from "../../components/Chip";
 import { EmptyState } from "../../components/EmptyState";
 import { Icon, IconChevron, IconEdit, IconEvents, IconFilter, IconPlus, IconSearch, IconSeat } from "../../components/icons";
@@ -59,13 +59,29 @@ export function EventsScreen() {
     [events]
   );
 
+  // Reactive "today", refreshed on visibilitychange/focus rather than read
+  // once inside the memo below — otherwise this screen left open across a
+  // midnight rollover keeps showing yesterday's event as "happening now"
+  // until some unrelated re-render happens to recompute `sorted`.
+  const [today, setToday] = useState(todayISO());
+  useEffect(() => {
+    function refresh() {
+      setToday(todayISO());
+    }
+    document.addEventListener("visibilitychange", refresh);
+    window.addEventListener("focus", refresh);
+    return () => {
+      document.removeEventListener("visibilitychange", refresh);
+      window.removeEventListener("focus", refresh);
+    };
+  }, []);
+
   // Whatever event's own dates include today, regardless of the filters
   // below, since this is a quick "here's what's live right now" callout,
   // not part of the filtered browsing list.
   const nowEvent = useMemo(() => {
-    const today = todayISO();
     return sorted.find((e) => e.startDate <= today && today <= e.endDate);
-  }, [sorted]);
+  }, [sorted, today]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
