@@ -15,10 +15,10 @@ export const SPREADSHEET_TITLE = "Event Planner";
 export const TAB = {
   Meta: "Settings",
   Events: "Events",
-  EventTasks: "Task Tracker",
-  Expenses: "Expenses",
-  Rooms: "Rooms",
-  Guests: "Seating Guests",
+  EventTasks: "Tasks",
+  Expenses: "Budget",
+  Rooms: "Seating",
+  Guests: "Guests",
 } as const;
 
 export const HEADERS: Record<string, string[]> = {

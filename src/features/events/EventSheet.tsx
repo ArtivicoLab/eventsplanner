@@ -326,6 +326,7 @@ export function EventSheet({ open, eventId, initialDate, onClose }: Props) {
           min={0}
           className="input"
           value={budget}
+          onFocus={(e) => e.target.select()}
           onChange={(e) => setBudget(e.target.value === "" ? 0 : Number(e.target.value))}
         />
       </div>

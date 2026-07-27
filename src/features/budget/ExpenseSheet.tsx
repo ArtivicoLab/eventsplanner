@@ -159,6 +159,7 @@ export function ExpenseSheet({ open, expenseId, defaultEventId, onClose }: Props
             step="0.01"
             placeholder="0.00"
             value={amount}
+            onFocus={(e) => e.target.select()}
             onChange={(e) => setAmount(e.target.value)}
           />
         </div>

@@ -625,6 +625,7 @@ function LayoutSheet({
             max={12}
             className="input"
             value={tableCount}
+            onFocus={(e) => e.target.select()}
             onChange={(e) => setTableCount(Math.max(1, Math.min(12, Number(e.target.value) || 1)))}
           />
         </div>
@@ -637,6 +638,7 @@ function LayoutSheet({
             max={24}
             className="input"
             value={seatsPerTable}
+            onFocus={(e) => e.target.select()}
             onChange={(e) => setSeatsPerTable(Math.max(1, Math.min(24, Number(e.target.value) || 1)))}
           />
         </div>
@@ -710,6 +712,7 @@ function RoomFormSheet({
           max={24}
           className="input"
           value={seats}
+          onFocus={(e) => e.target.select()}
           onChange={(e) => setSeats(Math.max(1, Math.min(24, Number(e.target.value) || 1)))}
         />
       </div>

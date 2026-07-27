@@ -86,6 +86,20 @@ const SYNC_TABS = [TAB.Events, TAB.EventTasks, TAB.Expenses, TAB.Rooms, TAB.Gues
 // tracking keep using SYNC_TABS.
 const ALL_TABS = [...SYNC_TABS, TAB.Meta];
 
+// One-time, idempotent migration for a sheet created before tab titles were
+// changed to match the app's own nav labels exactly ("Task Tracker" -> TAB.
+// EventTasks, etc.) — ensureTabs() renames a matching existing tab IN PLACE
+// (data untouched) instead of leaving it orphaned under the old name while a
+// new, empty tab gets created under the new one. Passed on every ensureTabs()
+// call (not just connect/relink) so even a background sync catches an
+// already-connected sheet up, not only an explicit reconnect.
+const TAB_RENAMES: Record<string, string> = {
+  "Task Tracker": TAB.EventTasks,
+  Expenses: TAB.Expenses,
+  Rooms: TAB.Rooms,
+  "Seating Guests": TAB.Guests,
+};
+
 // Maps an IndexedDB collection to the single Sheet tab it lives in — lets a
 // mutation push just its own tab instead of rewriting every tab on every edit.
 export const COLLECTION_TAB: Record<db.Collection, string> = {
@@ -192,7 +206,7 @@ async function pushAllInner(allowInteractive: boolean): Promise<void> {
   if (isDemo()) return;
   const id = getSpreadsheetId();
   if (!id) return;
-  await ensureTabs(id, SYNC_TABS, allowInteractive);
+  await ensureTabs(id, SYNC_TABS, allowInteractive, TAB_RENAMES);
   await writeAllTabs(id, SYNC_TABS, allowInteractive);
 }
 
@@ -211,7 +225,7 @@ async function pushDirtyInner(): Promise<void> {
   if (!id) return;
   const tabs = [...dirtyTabs];
   if (tabs.length === 0) return;
-  await ensureTabs(id, tabs, false);
+  await ensureTabs(id, tabs, false, TAB_RENAMES);
   await writeAllTabs(id, tabs, false);
 }
 
@@ -369,7 +383,7 @@ export async function connect(): Promise<string> {
   const existing = getSpreadsheetId();
   if (existing) {
     try {
-      await ensureTabs(existing, ALL_TABS, true);
+      await ensureTabs(existing, ALL_TABS, true, TAB_RENAMES);
       localStorage.removeItem(LS_DISCONNECTED);
       // Push local changes UP before pulling the sheet down. This device may
       // have kept working (safely, in IndexedDB) through a stretch where the
@@ -443,7 +457,7 @@ export async function relink(idOrUrl: string): Promise<void> {
     const { setDemoMode } = await import("../stores/bootstrap");
     await setDemoMode(false);
   }
-  await ensureTabs(id, ALL_TABS, true);
+  await ensureTabs(id, ALL_TABS, true, TAB_RENAMES);
   setSpreadsheetId(id);
   await pull(true);
   await syncAccessCode(id, true);
