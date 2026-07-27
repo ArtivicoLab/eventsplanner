@@ -6,7 +6,6 @@
 import type { EventItem, EventTask, Expense, Guest, Priority, Room, RoomShape, TaskStatus } from "./types";
 
 export const SPREADSHEET_TITLE = "Event Planner";
-export const SCHEMA_VERSION = 1;
 
 // Tab names shown to the user in their actual Google Sheet — kept human-
 // readable (not internal camelCase collection names) so a buyer who opens

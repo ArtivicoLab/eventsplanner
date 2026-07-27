@@ -4,7 +4,7 @@ import { useSync } from "../stores/useSync";
 import { useDemo } from "../lib/demo";
 import { openCoachTour } from "../stores/useCoachTour";
 import { useInstall, type InstallPlatform } from "../stores/useInstall";
-import { IconCompass } from "./icons";
+import { IconCompass, IconSettings } from "./icons";
 import { ROUTE_LABELS } from "../nav";
 import { BottomSheet } from "./BottomSheet";
 
@@ -89,8 +89,8 @@ export function Header() {
       >
         <IconCompass size={16} />
       </button>
-      <button className="avatar" aria-label="Settings" data-tour="nav-settings" onClick={() => navigate("settings")}>
-        EP
+      <button className="avatar" aria-label="Settings" title="Settings" data-tour="nav-settings" onClick={() => navigate("settings")}>
+        <IconSettings size={16} />
       </button>
       <BottomSheet open={!!installNote} title="Install Event Planner" onClose={() => setInstallNote("")}>
         <p className="muted settings-sheet-note">{installNote}</p>

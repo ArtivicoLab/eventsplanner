@@ -8,6 +8,7 @@ import { IconBudget, IconPlus, IconReceipt } from "../../components/icons";
 import { useEvents } from "../../stores/useEvents";
 import { useExpenses } from "../../stores/useExpenses";
 import { useSettings } from "../../stores/useSettings";
+import { onActivateKey } from "../../lib/a11y";
 import { categoryColor, money } from "../../lib/ui";
 import { format, fromISO } from "../../lib/dates";
 import { navigate } from "../../router";
@@ -182,9 +183,7 @@ export function BudgetScreen() {
                 role="button"
                 tabIndex={0}
                 onClick={() => openEdit(ex.id)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") openEdit(ex.id);
-                }}
+                onKeyDown={onActivateKey(() => openEdit(ex.id))}
                 style={{ padding: "12px 0", cursor: "pointer" }}
               >
                 <div style={{ minWidth: 0 }}>

@@ -26,8 +26,31 @@ export function BottomSheet({ open, title, onClose, children }: Props) {
     if (!open) return;
     openSheetStack.push(id);
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && openSheetStack[openSheetStack.length - 1] === id) {
+      if (openSheetStack[openSheetStack.length - 1] !== id) return;
+      if (e.key === "Escape") {
         onClose();
+        return;
+      }
+      // aria-modal="true" claims focus can't leave the sheet, so make that
+      // actually true: wrap Tab/Shift+Tab at the sheet's own edges instead
+      // of letting focus escape into the page underneath.
+      if (e.key !== "Tab") return;
+      const el = sheetRef.current;
+      if (!el) return;
+      const focusables = Array.from(
+        el.querySelectorAll<HTMLElement>(
+          'button:not(:disabled), [href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])'
+        )
+      );
+      if (focusables.length === 0) return;
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
       }
     };
     document.addEventListener("keydown", onKey);

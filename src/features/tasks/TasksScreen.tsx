@@ -11,8 +11,9 @@ import { IconPlus, IconSearch, IconTasks } from "../../components/icons";
 import { TaskSheet } from "./TaskSheet";
 import { useEventTasks } from "../../stores/useEventTasks";
 import { useEvents } from "../../stores/useEvents";
+import { onActivateKey } from "../../lib/a11y";
 import { daysBetween, dueLabel, isOverdueISO, todayISO } from "../../lib/dates";
-import { categoryColor, PRIORITY_COLOR, PRIORITY_LABEL, TASK_STATUS_COLOR, TASK_STATUS_LABEL } from "../../lib/ui";
+import { categoryColor, initials, PRIORITY_COLOR, PRIORITY_LABEL, TASK_STATUS_COLOR, TASK_STATUS_LABEL } from "../../lib/ui";
 import { PRIORITIES, TASK_STATUSES, type EventItem, type EventTask, type Priority, type TaskStatus } from "../../lib/types";
 import { navigate, routeQuery } from "../../router";
 
@@ -32,13 +33,6 @@ function byDueDate(a: EventTask, b: EventTask): number {
   if (!a.dueDate) return 1;
   if (!b.dueDate) return -1;
   return a.dueDate < b.dueDate ? -1 : a.dueDate > b.dueDate ? 1 : 0;
-}
-
-function initials(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return "?";
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
 export function TasksScreen() {
@@ -283,7 +277,14 @@ function TaskRow({
 }) {
   const variant = dueVariant(task.dueDate, today);
   return (
-    <div className="task" style={{ cursor: "pointer" }} onClick={onOpen}>
+    <div
+      className="task"
+      role="button"
+      tabIndex={0}
+      style={{ cursor: "pointer" }}
+      onClick={onOpen}
+      onKeyDown={onActivateKey(onOpen)}
+    >
       <span className="ring" style={{ borderColor: PRIORITY_COLOR[task.priority] }} aria-hidden />
       <span className="task__body">
         <span className="task__title">{task.task || "Untitled task"}</span>

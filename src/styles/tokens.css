@@ -93,10 +93,14 @@
   --ink: #4a3a4a;
   --muted: #7d6d85; /* ~4.6:1 on --bg */
   --hairline: #f3e4ee;
-  --accent: #d9577f; /* soft pink, read at full contrast */
+  --accent: #d9577f; /* soft pink; a gradient/fill color, NOT text-safe (~3.4:1 on --bg) */
   --accent-2: #7d66b8; /* lavender, the secondary accent */
   --accent-soft: #fce4ec;
   --accent-2-soft: #ede7fa;
+  /* --accent itself is a fill/gradient color, not text-safe at small sizes —
+     use this instead anywhere --accent renders as literal text/icon color
+     (labels, links, badges), so it actually clears WCAG AA's 4.5:1. */
+  --accent-text: #b8456c;
   --success: #4f926f;
   --success-soft: #e2f3e9;
   --alert: #d6435b;
@@ -125,14 +129,22 @@
   --accent-2: #b09ae0;
   --accent-soft: #4a2836;
   --accent-2-soft: #3a3050;
+  /* Dark theme's --accent is already light-on-dark, so it's text-safe as-is
+     (unlike light theme's, which needs the darker --accent-text override). */
+  --accent-text: #f2809f;
   --success: #7fcb9e;
   --success-soft: #234133;
   --alert: #ed7a8e;
   --alert-soft: #45222a;
   --warn: #e6aa5c;
   --warn-soft: #43331c;
-  --shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-  --shadow-sm: 0 3px 10px rgba(0, 0, 0, 0.4);
+  /* Same dual-layer STRUCTURE as light theme (tight contact shadow + big soft
+     ambient bloom), re-tinted for a dark surface: a near-black contact shadow
+     for grounding (a pink-tinted one would just look muddy on dark), plus a
+     soft lavender bloom using --accent-2 so it still reads as "Old Flame"
+     glow rather than a flat, generic dark-mode drop shadow. */
+  --shadow: 0 2px 8px rgba(0, 0, 0, 0.35), 0 20px 46px rgba(176, 154, 224, 0.16);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3), 0 8px 18px rgba(176, 154, 224, 0.13);
   --scrim: rgba(0, 0, 0, 0.6);
   color-scheme: dark;
 
@@ -173,14 +185,15 @@
     --accent-2: #b09ae0;
     --accent-soft: #4a2836;
     --accent-2-soft: #3a3050;
+    --accent-text: #f2809f;
     --success: #7fcb9e;
     --success-soft: #234133;
     --alert: #ed7a8e;
     --alert-soft: #45222a;
     --warn: #e6aa5c;
     --warn-soft: #43331c;
-    --shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-    --shadow-sm: 0 3px 10px rgba(0, 0, 0, 0.4);
+    --shadow: 0 2px 8px rgba(0, 0, 0, 0.35), 0 20px 46px rgba(176, 154, 224, 0.16);
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3), 0 8px 18px rgba(176, 154, 224, 0.13);
     --scrim: rgba(0, 0, 0, 0.6);
     color-scheme: dark;
 

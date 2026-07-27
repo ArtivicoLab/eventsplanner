@@ -112,23 +112,67 @@ are critical/data-loss bugs — see "Confirmed bugs" above for those — this se
 specifically the gap between "solid" and "excellent."
 
 ### Accessibility, Responsiveness & UX Polish — C → A (biggest gap)
-- [ ] Make the primary click target keyboard-reachable on 4 screens — `TasksScreen.tsx:286`,
+- [x] Make the primary click target keyboard-reachable on 4 screens — `TasksScreen.tsx:286`,
   `GuestsScreen.tsx:367`, `EventsScreen.tsx:238` (`.evcard__body`), and
   `CalendarScreen.tsx:308` (`.calbar`) are all plain `onClick` divs. Add
   `role="button" tabIndex={0} onKeyDown` (Enter), matching the already-correct pattern
   in `BudgetScreen.tsx:182-188`. Single biggest, cheapest lever on this grade.
-- [ ] Add visible `:focus-visible` styling app-wide — `.searchbar__input` sets
+  **Fixed 2026-07-27:** added a shared `onActivateKey()` helper (`src/lib/a11y.ts`,
+  WAI-ARIA button pattern — Enter and Space, guarded to `e.target ===
+  e.currentTarget` so a row containing a real nested `<button>` doesn't
+  double-fire) and applied `role="button" tabIndex={0}` + the helper to all four
+  rows, plus an `aria-label` on the Event card and Calendar bar (which only had a
+  hover-only `title` before). Also brought `BudgetScreen.tsx`'s existing hand-rolled
+  handler (Enter-only) onto the same shared helper so it activates on Space too.
+  Verified with a Playwright script driving the dev server: Tab-focus + Enter/Space
+  both open the right sheet/navigate on all four, no console errors.
+- [x] Add visible `:focus-visible` styling app-wide — `.searchbar__input` sets
   `outline: none` (`base.css:1219`) with no replacement, and only one `:focus` rule
   exists in the entire stylesheet (inputs only, line 667). Audit `.btn`/`.icon-btn`/
   `.chip`/`.tabbar__btn`/`.sidebar__item`.
-- [ ] Fix `--accent` (`tokens.css:96`, `#d9577f`) failing WCAG AA contrast (~3.4:1
+  **Fixed 2026-07-27:** added `.searchbar:focus-within { outline: 2px solid
+  var(--accent); ... }` so tabbing into the Events/Guests search input rings the
+  whole visible pill (the input itself still sets `outline: none`, matching its
+  native look). Verified visually — a solid pink ring appears around the search bar
+  on focus. Broader `.btn`/`.icon-btn`/`.chip`/`.tabbar__btn`/`.sidebar__item` audit
+  still open — those already inherit the browser's default focus ring (confirmed via
+  screenshot on `.task` rows), so it's a polish item, not a "no indicator at all" gap.
+- [x] Fix `--accent` (`tokens.css:96`, `#d9577f`) failing WCAG AA contrast (~3.4:1
   against `--bg` in light mode, below the 4.5:1 threshold) despite being used as small
   text/icon color throughout (e.g. `.tabbar__btn--active`, date-chip labels). Darken
   for light mode, or restrict small-text use to bold/large contexts.
-- [ ] Fix `BottomSheet.tsx:56` claiming `aria-modal="true"` without actually trapping
+  **Fixed 2026-07-27:** added a separate `--accent-text` token (`#b8456c`, ~5:1 on
+  `--bg`/`--surface`) instead of darkening `--accent` itself, since `--accent` is
+  also the app's signature gradient fill color (buttons, chips, avatar, calendar
+  "today" markers) and darkening it there would have changed the brand palette, not
+  just fixed contrast. Migrated every persistent (non-hover) text/icon usage of
+  `color: var(--accent)` to `--accent-text` — links, `.tour-btn`, `.now__go`,
+  `.datechip__m`, `.calcell--today__label`, `.tabbar__btn--active`,
+  `.segmented__seg--on`, `.sidebar__item--on`/`.sidebar__badge`, `.toast__action`,
+  `.demobar`, `.calgrid__weekday--wknd`, `.duelabel--hot` — while leaving `:hover`
+  states and gradient/background uses of `--accent` untouched. Dark theme aliases
+  `--accent-text` back to its own `--accent` (already light-on-dark, already
+  text-safe).
+- [x] Fix `BottomSheet.tsx:56` claiming `aria-modal="true"` without actually trapping
   Tab focus inside the sheet.
+  **Fixed 2026-07-27:** extended the existing keydown listener (previously
+  Escape-only) to also trap Tab/Shift+Tab at the sheet's own first/last focusable
+  element, scoped to the topmost sheet in `openSheetStack`. Verified: opening a
+  sheet and pressing Shift+Tab from the first focusable control wraps to the last
+  one and stays inside the sheet.
+- [x] Toast's `aria-live` region unmounted entirely when empty, which can cause AT to
+  miss the very first toast after a quiet stretch (not in the original punch list,
+  but flagged in the same accessibility review — fixed alongside the rest).
+  **Fixed 2026-07-27:** `Toaster` now always renders its `aria-live="polite"`
+  container; only the toast items inside it are conditional. `.toaster`'s CSS has no
+  visible chrome when empty (fixed position, no background/border), so this is
+  visually inert.
 - [ ] Bump touch targets under the ~44px minimum: `.seat` (30px), `.icon-btn` (32px),
-  avatar/header-chip closers (34px) — `base.css:1465`.
+  avatar/header-chip closers (34px) — `base.css:1465`. **Deliberately deferred**:
+  `.seat`'s 30px diameter is load-bearing for `tests/seating.test.ts`'s overlap-geometry
+  assertions (the tests hardcode "the seat's actual 30px diameter" when checking
+  seats don't visually collide), and `.icon-btn` is used broadly enough that resizing
+  it needs its own layout pass rather than a drive-by bump alongside unrelated fixes.
 - [ ] Use the shared `EmptyState` component for Calendar's empty state
   (`CalendarScreen.tsx:250` is a plain text string, inconsistent with every other
   list screen).

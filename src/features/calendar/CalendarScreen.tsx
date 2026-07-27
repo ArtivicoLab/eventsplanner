@@ -14,6 +14,7 @@ import { Chip, ChipRow } from "../../components/Chip";
 import { Toggle } from "../../components/Toggle";
 import { IconChevronLeft, IconChevron, IconPlus } from "../../components/icons";
 import { layoutMonthEvents, type WeekLayout } from "../../lib/calendarLayout";
+import { onActivateKey } from "../../lib/a11y";
 import {
   addDaysISO,
   addMonthsISO,
@@ -308,6 +309,8 @@ export function CalendarScreen() {
                 <div
                   key={`${bar.event.id}-${wi}`}
                   className="calbar"
+                  role="button"
+                  tabIndex={0}
                   style={{
                     left: `calc(${bar.startCol}/7*100% + 3px)`,
                     width: `calc(${bar.span}/7*100% - 6px)`,
@@ -315,7 +318,9 @@ export function CalendarScreen() {
                     background: `color-mix(in srgb, ${categoryColor(bar.event.category)} 45%, var(--surface))`,
                   }}
                   title={`${bar.event.name} (${bar.event.startDate} to ${bar.event.endDate})`}
+                  aria-label={`${bar.event.name || "Untitled event"}, ${rangeLabel(bar.event.startDate, bar.event.endDate)}`}
                   onClick={() => navigate("eventdetail", { id: bar.event.id })}
+                  onKeyDown={onActivateKey(() => navigate("eventdetail", { id: bar.event.id }))}
                 >
                   <span className="calbar__dot" style={{ background: categoryColor(bar.event.category) }} />
                   {bar.event.name}

@@ -29,10 +29,17 @@ export const PICKABLE_CATEGORY_COLORS = [
   "var(--cat-teal)", "var(--cat-berry)", "var(--cat-honey)", "var(--cat-slate)", "var(--cat-moss)", "var(--cat-lilac)",
 ];
 
-function hashColor(key: string, pool: string[]): string {
+export function hashColor(key: string, pool: string[]): string {
   let h = 0;
   for (let i = 0; i < key.length; i++) h = (h * 31 + key.charCodeAt(i)) >>> 0;
   return pool[h % pool.length];
+}
+
+export function initials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "?";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
 export function categoryColor(cat: string): string {

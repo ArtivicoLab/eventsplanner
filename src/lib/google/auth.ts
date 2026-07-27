@@ -193,10 +193,6 @@ export function requestToken(interactive: boolean): Promise<string> {
   );
 }
 
-export function currentToken(): string | null {
-  return tokenValid() ? getCached()!.token : null;
-}
-
 /** Drop the cached token — e.g. after a 401 shows it's actually bad
     server-side even though it still looked time-valid locally. The NEXT
     requestToken() will fetch a genuinely fresh one. */

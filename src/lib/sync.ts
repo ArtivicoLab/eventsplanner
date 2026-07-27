@@ -159,18 +159,6 @@ async function tabValues(tab: string): Promise<string[][]> {
   return [header, ...rows];
 }
 
-// In-memory only (never persisted, never survives a reload) — exists so any
-// code path that temporarily swaps real stores for sample/demo data can stop
-// a push from clobbering a real, connected Sheet with fake rows while that
-// swap is active.
-let syncSuspended = false;
-export function suspendSync(): void {
-  syncSuspended = true;
-}
-export function resumeSync(): void {
-  syncSuspended = false;
-}
-
 // pushAll() and pushDirty() must never run concurrently with each other OR
 // with themselves — two independent clear+write cycles against the same tab
 // can resolve out of request order, so whichever finishes SECOND can
@@ -201,7 +189,7 @@ export function pushAll(allowInteractive: boolean): Promise<void> {
 }
 
 async function pushAllInner(allowInteractive: boolean): Promise<void> {
-  if (isDemo() || syncSuspended) return;
+  if (isDemo()) return;
   const id = getSpreadsheetId();
   if (!id) return;
   await ensureTabs(id, SYNC_TABS, allowInteractive);
@@ -218,7 +206,7 @@ export function pushDirty(): Promise<void> {
 }
 
 async function pushDirtyInner(): Promise<void> {
-  if (isDemo() || syncSuspended) return;
+  if (isDemo()) return;
   const id = getSpreadsheetId();
   if (!id) return;
   const tabs = [...dirtyTabs];

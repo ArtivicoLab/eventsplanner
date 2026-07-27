@@ -18,7 +18,6 @@ import {
   Trash2,
   Pencil,
   ArrowRight,
-  Heart,
   Sun,
   Moon,
   Minus,
@@ -72,7 +71,6 @@ export const IconTag = Tag;
 export const IconTrash = Trash2;
 export const IconEdit = Pencil;
 export const IconArrowRight = ArrowRight;
-export const IconHeart = Heart;
 export const IconSun = Sun;
 export const IconMoon = Moon;
 export const IconMinus = Minus;
@@ -89,16 +87,8 @@ export const IconSeat = Armchair;
 export const IconMove = Move;
 
 // ---- Event/Task status icons ----
-export const IconTrendingUp = TrendingUp;
-export const IconFileClock = FileClock;
-export const IconBadgeCheck = BadgeCheck;
-export const IconZap = Zap;
-export const IconCheckCircle = CheckCircle2;
-export const IconXCircle = XCircle;
-export const IconCircle = Circle;
 export const IconPlayCircle = PlayCircle;
 export const IconPauseCircle = PauseCircle;
-export const IconEye = Eye;
 
 // ---- Registry for user-pickable icons (Event Status Setup list) ----
 export const NAMED_ICONS: Record<string, LucideIcon> = {
@@ -113,7 +103,6 @@ export const NAMED_ICONS: Record<string, LucideIcon> = {
   "pause-circle": PauseCircle,
   eye: Eye,
   star: Sun,
-  heart: Heart,
 };
 
 export const PICKABLE_ICON_NAMES = Object.keys(NAMED_ICONS);

@@ -20,24 +20,12 @@ import { useEvents } from "../../stores/useEvents";
 import { useGuests } from "../../stores/useGuests";
 import { useRooms } from "../../stores/useRooms";
 import { useToast } from "../../stores/useToast";
+import { onActivateKey } from "../../lib/a11y";
 import { formatTimeOfDay } from "../../lib/dates";
-import { PICKABLE_CATEGORY_COLORS } from "../../lib/ui";
+import { hashColor, initials, pct, PICKABLE_CATEGORY_COLORS } from "../../lib/ui";
 import { navigate, routeQuery } from "../../router";
 import type { EventItem, Guest, Room } from "../../lib/types";
 import { GuestSheet } from "./GuestSheet";
-
-function hashColor(id: string): string {
-  let h = 0;
-  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
-  return PICKABLE_CATEGORY_COLORS[h % PICKABLE_CATEGORY_COLORS.length];
-}
-
-function initials(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return "?";
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-}
 
 export function GuestsScreen() {
   const { items: events } = useEvents();
@@ -253,7 +241,7 @@ function GuestEventSection({
   onAssignSeat: (id: string) => void;
 }) {
   const seated = guests.filter((g) => g.roomId).length;
-  const pct = guests.length ? Math.round((seated / guests.length) * 100) : 0;
+  const seatedPct = guests.length ? pct(seated, guests.length) : 0;
 
   const tableGroups = rooms
     .map((room) => ({
@@ -274,7 +262,7 @@ function GuestEventSection({
         </span>
         {guests.length > 0 && (
           <div className="eventhead__progress">
-            <div className="eventhead__bar"><i style={{ width: `${pct}%` }} /></div>
+            <div className="eventhead__bar"><i style={{ width: `${seatedPct}%` }} /></div>
             {seated}/{guests.length} seated
           </div>
         )}
@@ -296,7 +284,7 @@ function GuestEventSection({
               <div key={g.id} className="task">
                 <button
                   className="guestrow__avatar"
-                  style={{ background: hashColor(g.id), border: "none", cursor: "pointer" }}
+                  style={{ background: hashColor(g.id, PICKABLE_CATEGORY_COLORS), border: "none", cursor: "pointer" }}
                   onClick={() => onOpenGuest(g.id)}
                   aria-label={`Edit ${g.name || "guest"}`}
                 >
@@ -364,8 +352,16 @@ function TableGroup({
       </div>
       <div className="tablegroup__rows">
         {guests.map((g) => (
-          <div key={g.id} className="task" style={{ cursor: "pointer" }} onClick={() => onOpenGuest(g.id)}>
-            <span className="guestrow__avatar" style={{ background: hashColor(g.id) }} aria-hidden>
+          <div
+            key={g.id}
+            className="task"
+            role="button"
+            tabIndex={0}
+            style={{ cursor: "pointer" }}
+            onClick={() => onOpenGuest(g.id)}
+            onKeyDown={onActivateKey(() => onOpenGuest(g.id))}
+          >
+            <span className="guestrow__avatar" style={{ background: hashColor(g.id, PICKABLE_CATEGORY_COLORS) }} aria-hidden>
               {initials(g.name)}
             </span>
             <span className="task__body">

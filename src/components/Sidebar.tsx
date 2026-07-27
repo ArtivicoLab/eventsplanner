@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { navigate, type Route } from "../router";
 import { NAV, SETTINGS_ITEM, ROUTE_LABELS } from "../nav";
-import { IconHeart, IconCompass, IconPauseCircle, IconPlayCircle } from "./icons";
+import { IconLock, IconCompass, IconPauseCircle, IconPlayCircle } from "./icons";
 import { useSync } from "../stores/useSync";
 import { useDemo } from "../lib/demo";
 import { useEvents } from "../stores/useEvents";
@@ -115,7 +115,7 @@ export function Sidebar({ active }: { active: Route }) {
             onClick={() => navigate("privacy")}
           >
             <span className="sidebar__ico" style={{ background: "var(--surface-2)" }}>
-              <IconHeart size={16} />
+              <IconLock size={16} />
             </span>
             Privacy
           </button>

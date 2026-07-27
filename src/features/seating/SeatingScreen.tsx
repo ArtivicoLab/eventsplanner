@@ -24,16 +24,10 @@ import {
 } from "../../components/icons";
 import { seatPositions } from "../../lib/seating";
 import { formatTimeOfDay } from "../../lib/dates";
-import { PICKABLE_CATEGORY_COLORS } from "../../lib/ui";
+import { hashColor, PICKABLE_CATEGORY_COLORS } from "../../lib/ui";
 import type { Guest, Room, RoomShape } from "../../lib/types";
 
 const DEFAULT_SEATS = 8;
-
-function hashColor(id: string): string {
-  let h = 0;
-  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
-  return PICKABLE_CATEGORY_COLORS[h % PICKABLE_CATEGORY_COLORS.length];
-}
 
 // Cascades new rooms across the canvas instead of stacking them all on top
 // of each other at a fixed default position. Only a 3x3 grid of spots fits
@@ -378,7 +372,7 @@ export function SeatingScreen() {
                         style={{
                           left: `${pt.xPct}%`,
                           top: `${pt.yPct}%`,
-                          background: occupant ? hashColor(occupant.id) : undefined,
+                          background: occupant ? hashColor(occupant.id, PICKABLE_CATEGORY_COLORS) : undefined,
                         }}
                         title={occupant ? `${guestNumber.get(occupant.id)} · ${occupant.name}` : `Empty seat ${i + 1}`}
                         onClick={() =>
@@ -411,7 +405,7 @@ export function SeatingScreen() {
                 <div key={g.id} className="guestrow">
                   <button
                     className="guestrow__avatar"
-                    style={{ background: hashColor(g.id), border: "none" }}
+                    style={{ background: hashColor(g.id, PICKABLE_CATEGORY_COLORS), border: "none" }}
                     onClick={() => setGuestEditor({ guestId: g.id })}
                     aria-label={`Edit ${g.name}`}
                   >
@@ -854,7 +848,7 @@ function SeatGuestPickerSheet({
               style={{ border: "none", width: "100%", textAlign: "left", cursor: "pointer" }}
               onClick={() => onPick(g.id)}
             >
-              <span className="guestrow__avatar" style={{ background: hashColor(g.id) }}>
+              <span className="guestrow__avatar" style={{ background: hashColor(g.id, PICKABLE_CATEGORY_COLORS) }}>
                 {guestNumber.get(g.id)}
               </span>
               <span className="guestrow__body">

@@ -4,7 +4,6 @@
 // real OAuth client id (see .env.example).
 export const LOCAL_MODE = false;
 
-export const APP_NAME = "Event Planner";
 export const DB_NAME = "eventplanner";
 // v2: added the "rooms" and "guests" object stores (Seating Chart).
 export const DB_VERSION = 2;

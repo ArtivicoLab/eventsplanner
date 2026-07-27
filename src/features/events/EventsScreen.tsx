@@ -7,9 +7,10 @@ import { EmptyState } from "../../components/EmptyState";
 import { Icon, IconChevron, IconEdit, IconEvents, IconFilter, IconPlus, IconSearch, IconSeat } from "../../components/icons";
 import { useEvents } from "../../stores/useEvents";
 import { useSettings } from "../../stores/useSettings";
+import { onActivateKey } from "../../lib/a11y";
 import { navigate } from "../../router";
 import { dayNum, fromISO, format, todayISO } from "../../lib/dates";
-import { categoryColor, eventStatusColor, money, PRIORITY_COLOR, PRIORITY_LABEL } from "../../lib/ui";
+import { categoryColor, eventStatusColor, initials, money, PRIORITY_COLOR, PRIORITY_LABEL } from "../../lib/ui";
 import { PRIORITIES, type EventItem, type Priority } from "../../lib/types";
 import { EventSheet } from "./EventSheet";
 
@@ -18,13 +19,6 @@ function dateRangeLabel(ev: EventItem): string {
   if (ev.startDate === ev.endDate) return start;
   const end = format(fromISO(ev.endDate), "MMM d");
   return `${start} to ${end}`;
-}
-
-function initials(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return "?";
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
 function toggleIn<T>(list: T[], value: T, setter: (v: T[]) => void) {
@@ -251,7 +245,14 @@ function EventCard({ event, onEdit }: { event: EventItem; onEdit: () => void }) 
   return (
     <article className="evcard">
       <div className="evcard__ribbon" style={{ background: `linear-gradient(90deg, ${catColor}, transparent 140%)` }} />
-      <div className="evcard__body" onClick={() => navigate("eventdetail", { id: event.id })}>
+      <div
+        className="evcard__body"
+        role="button"
+        tabIndex={0}
+        aria-label={`View ${event.name || "event"} details`}
+        onClick={() => navigate("eventdetail", { id: event.id })}
+        onKeyDown={onActivateKey(() => navigate("eventdetail", { id: event.id }))}
+      >
         <div className="evcard__top">
           <span className="datechip" style={{ background: `color-mix(in srgb, ${catColor} 35%, var(--surface))` }}>
             <span className="datechip__m">{format(fromISO(event.startDate), "MMM")}</span>
