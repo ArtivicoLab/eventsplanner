@@ -665,6 +665,49 @@ img { max-width: 100%; display: block; }
 .textarea { resize: vertical; min-height: 72px; }
 .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-3); }
 
+/* ---------- Settings screen: row pattern (label+hint left, control right) ---------- */
+.srow { display: flex; align-items: center; gap: var(--sp-5); padding: var(--sp-4) 0; border-bottom: 1px solid var(--hairline); }
+.srow:first-child { padding-top: 0; }
+.srow:last-child { border-bottom: none; padding-bottom: 0; }
+.srow__info { flex: 1; min-width: 0; }
+.srow__label { font-weight: 700; font-size: 14.5px; }
+.srow__hint { font-size: 13px; color: var(--muted); margin-top: 3px; line-height: 1.45; }
+.srow__control { flex: none; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.srow__extra { padding-top: var(--sp-4); margin-top: var(--sp-1); border-top: 1px dashed var(--hairline); }
+@media (max-width: 480px) {
+  .srow { flex-direction: column; align-items: flex-start; }
+  .srow__control { width: 100%; }
+}
+
+.status-pill { display: inline-flex; align-items: center; font-size: 13px; font-weight: 700; padding: 7px 14px; border-radius: var(--r-pill); }
+.status-pill--ok { background: var(--success-soft); color: var(--success); }
+
+/* ---------- Lists & Labels: consolidated taxonomy editors ---------- */
+.taxblock { padding: var(--sp-4) 0; border-bottom: 1px solid var(--hairline); }
+.taxblock:first-child { padding-top: 0; }
+.taxblock:last-child { border-bottom: none; padding-bottom: 0; }
+.taxhead { display: flex; align-items: baseline; gap: 10px; margin-bottom: var(--sp-2); flex-wrap: wrap; }
+.taxhead__label { font-weight: 700; font-size: 14.5px; }
+.taxhead__count { font-size: 12px; color: var(--muted); }
+.taxhead__hint { font-size: 12.5px; color: var(--muted); margin-left: auto; }
+
+/* ---------- About: shrunk to a single quiet line, no card ---------- */
+.about-line { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; font-size: 13px; color: var(--muted); padding: 0 var(--sp-1); }
+.about-line b { color: var(--ink); }
+.about-line__sep { color: var(--hairline); }
+.about-line button, .about-line a { background: none; border: none; padding: 0; font: inherit; font-size: 13px; color: var(--accent-text); cursor: pointer; text-decoration: underline; }
+
+/* ---------- Danger Zone: outlined card instead of the plain surface ---------- */
+.danger-card {
+  position: relative;
+  background: var(--surface);
+  border: 1.5px solid var(--alert-soft);
+  border-radius: var(--r-card);
+  box-shadow: var(--shadow);
+  padding: var(--sp-4);
+  overflow: hidden;
+}
+
 /* ---------- bottom sheet ---------- */
 .sheet-scrim {
   position: fixed;

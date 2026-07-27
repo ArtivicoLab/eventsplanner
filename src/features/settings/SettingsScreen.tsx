@@ -249,91 +249,99 @@ export function SettingsScreen() {
       <h1 className="page-title">Settings</h1>
       <p className="page-sub">Make Event Planner yours.</p>
 
-      {/* ---------- 1. Access code ---------- */}
-      <div className="section-title">Access Code</div>
-      <div className="card">
-        {activated ? (
-          <p className="fs-13" style={{ color: "var(--success)", fontWeight: 700, margin: 0 }}>
-            Activated
-          </p>
-        ) : (
-          <>
-            <p className="muted fs-13 mb-1">Enter the code from your Etsy order to unlock Google Sheets sync.</p>
-            <div className="spread spread--gap8">
-              <input
-                className="input"
-                value={accessCodeInput}
-                placeholder="Access code"
-                aria-label="Access code"
-                onChange={(e) => setAccessCodeInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && void submitAccessCode()}
-              />
-              <button className="btn btn--auto" disabled={!accessCodeInput.trim()} onClick={() => void submitAccessCode()}>
-                Unlock
-              </button>
-            </div>
-          </>
-        )}
-      </div>
-
-      {/* ---------- 2. Google Sheets ---------- */}
-      <div className="section-title">Google Sheets</div>
+      {/* ---------- 1. Account & Sync (access code + Google Sheets, merged) ---------- */}
+      <div className="section-title">Account &amp; Sync</div>
       <div className="card" data-tour="settings-sheets">
-        {!hasClientId ? (
-          <>
-            <p className="muted fs-13 mb-1">
-              Google Sheets sync isn't set up in this build yet, everything still works fully offline.
-            </p>
-            <button className="btn btn--primary" disabled>
-              Connect Google
-            </button>
-          </>
-        ) : connected ? (
-          <>
-            <p className="muted fs-13 mb-1">Connected. Your data lives in your own Google Drive.</p>
-            <a className="btn btn--ghost btn--stack" href={spreadsheetUrl(spreadsheetId)} target="_blank" rel="noreferrer">
-              Open my sheet
-            </a>
-            <button className="btn btn--primary btn--stack" disabled={busy} onClick={() => void syncNow(true)}>
-              {busy ? "Syncing…" : "Sync now"}
-            </button>
-            <button className="btn btn--ghost" onClick={() => disconnect()}>
-              Disconnect
-            </button>
-          </>
-        ) : (
-          <>
-            <button className="btn btn--primary btn--stack" disabled={busy} onClick={() => void connect()}>
-              {busy ? "Connecting…" : "Connect Google"}
-            </button>
-            <button className="btn btn--ghost" onClick={() => setRelinkOpen((v) => !v)}>
-              Already have a sheet on another device?
-            </button>
-            {relinkOpen && (
-              <div className="field" style={{ marginTop: 12, marginBottom: 0 }}>
-                <label className="field__label" htmlFor="set-relink">
-                  Sheet link or ID
-                </label>
-                <div className="spread spread--gap8">
-                  <input
-                    id="set-relink"
-                    className="input"
-                    value={relinkValue}
-                    placeholder="https://docs.google.com/spreadsheets/d/…"
-                    onChange={(e) => setRelinkValue(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && void submitRelink()}
-                  />
-                  <button className="btn btn--auto" disabled={busy || !relinkValue.trim()} onClick={() => void submitRelink()}>
-                    {busy ? "Linking…" : "Link this sheet"}
-                  </button>
-                </div>
+        <div className="srow">
+          <div className="srow__info">
+            <div className="srow__label">Access code</div>
+            <div className="srow__hint">Your license for this device.</div>
+          </div>
+          <div className="srow__control">
+            {activated ? (
+              <span className="status-pill status-pill--ok">Activated</span>
+            ) : (
+              <div className="spread spread--gap8">
+                <input
+                  className="input"
+                  value={accessCodeInput}
+                  placeholder="Access code"
+                  aria-label="Access code"
+                  onChange={(e) => setAccessCodeInput(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && void submitAccessCode()}
+                />
+                <button className="btn btn--auto" disabled={!accessCodeInput.trim()} onClick={() => void submitAccessCode()}>
+                  Unlock
+                </button>
               </div>
             )}
-          </>
+          </div>
+        </div>
+
+        <div className="srow">
+          <div className="srow__info">
+            <div className="srow__label">Google Sheets</div>
+            <div className="srow__hint">
+              {!hasClientId
+                ? "Not set up in this build yet — everything still works fully offline."
+                : connected
+                  ? "Connected. Your data lives in your own Google Drive."
+                  : "Connect to back up your data and sync it across devices."}
+            </div>
+          </div>
+          <div className="srow__control">
+            {!hasClientId ? (
+              <button className="btn btn--primary btn--auto" disabled>
+                Connect Google
+              </button>
+            ) : connected ? (
+              <>
+                <a className="btn btn--ghost btn--auto" href={spreadsheetUrl(spreadsheetId)} target="_blank" rel="noreferrer">
+                  Open my sheet
+                </a>
+                <button className="btn btn--primary btn--auto" disabled={busy} onClick={() => void syncNow(true)}>
+                  {busy ? "Syncing…" : "Sync now"}
+                </button>
+                <button className="btn btn--ghost btn--auto" onClick={() => disconnect()}>
+                  Disconnect
+                </button>
+              </>
+            ) : (
+              <>
+                <button className="btn btn--primary btn--auto" disabled={busy} onClick={() => void connect()}>
+                  {busy ? "Connecting…" : "Connect Google"}
+                </button>
+                <button className="btn btn--ghost btn--auto" onClick={() => setRelinkOpen((v) => !v)}>
+                  Already have a sheet?
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+
+        {hasClientId && !connected && relinkOpen && (
+          <div className="srow__extra field" style={{ marginBottom: 0 }}>
+            <label className="field__label" htmlFor="set-relink">
+              Sheet link or ID
+            </label>
+            <div className="spread spread--gap8">
+              <input
+                id="set-relink"
+                className="input"
+                value={relinkValue}
+                placeholder="https://docs.google.com/spreadsheets/d/…"
+                onChange={(e) => setRelinkValue(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && void submitRelink()}
+              />
+              <button className="btn btn--auto" disabled={busy || !relinkValue.trim()} onClick={() => void submitRelink()}>
+                {busy ? "Linking…" : "Link this sheet"}
+              </button>
+            </div>
+          </div>
         )}
 
         {wrongAccount && (
-          <div style={{ marginTop: 12 }}>
+          <div className="srow__extra">
             <p className="fs-13" style={{ color: "var(--alert)" }}>
               {error || "This Google account doesn't have access to your existing sheet."}
             </p>
@@ -348,229 +356,277 @@ export function SettingsScreen() {
           </div>
         )}
         {!wrongAccount && error && (
-          <p className="fs-13" style={{ color: "var(--alert)", marginTop: 10 }}>
+          <p className="srow__extra fs-13" style={{ color: "var(--alert)" }}>
             {error}
           </p>
         )}
       </div>
 
-      {/* ---------- 3. Preferences ---------- */}
+      {/* ---------- 2. Preferences ---------- */}
       <div className="section-title">Preferences</div>
       <div className="card">
-        <div className="field">
-          <label className="field__label" htmlFor="set-name">
-            What should we call you?
-          </label>
-          <input
-            id="set-name"
-            className="input"
-            value={name}
-            maxLength={40}
-            placeholder="Your name (optional)"
-            onChange={(e) => update({ name: e.target.value })}
-          />
+        <div className="srow">
+          <div className="srow__info">
+            <div className="srow__label">Your name</div>
+            <div className="srow__hint">Used in greetings around the app. Optional.</div>
+          </div>
+          <div className="srow__control">
+            <input
+              id="set-name"
+              className="input"
+              value={name}
+              maxLength={40}
+              placeholder="Your name"
+              aria-label="Your name"
+              onChange={(e) => update({ name: e.target.value })}
+            />
+          </div>
         </div>
-        <div className="field">
-          <label className="field__label" htmlFor="set-currency">
-            Currency
-          </label>
-          <input
-            id="set-currency"
-            className="input"
-            value={currency}
-            maxLength={4}
-            onChange={(e) => update({ currency: e.target.value })}
-          />
+        <div className="srow">
+          <div className="srow__info">
+            <div className="srow__label">Currency</div>
+            <div className="srow__hint">Symbol shown on budgets and expenses.</div>
+          </div>
+          <div className="srow__control">
+            <input
+              id="set-currency"
+              className="input"
+              style={{ width: 80, textAlign: "center" }}
+              value={currency}
+              maxLength={4}
+              aria-label="Currency"
+              onChange={(e) => update({ currency: e.target.value })}
+            />
+          </div>
         </div>
-        <div className="field">
-          <label className="field__label">Week start</label>
-          <Segmented
-            options={[
-              { value: "0", label: "Sunday" },
-              { value: "1", label: "Monday" },
-            ]}
-            value={String(weekStart)}
-            onChange={(v) => update({ weekStart: Number(v) as 0 | 1 })}
-          />
+        <div className="srow">
+          <div className="srow__info">
+            <div className="srow__label">Week starts on</div>
+          </div>
+          <div className="srow__control">
+            <Segmented
+              options={[
+                { value: "0", label: "Sunday" },
+                { value: "1", label: "Monday" },
+              ]}
+              value={String(weekStart)}
+              onChange={(v) => update({ weekStart: Number(v) as 0 | 1 })}
+            />
+          </div>
         </div>
-        <div className="field" style={{ marginBottom: 0 }}>
-          <label className="field__label">Theme</label>
-          <Segmented
-            options={[
-              { value: "auto", label: "Auto" },
-              { value: "light", label: "Light" },
-              { value: "dark", label: "Dark" },
-            ]}
-            value={theme}
-            onChange={(v) => update({ theme: v as Settings["theme"] })}
-          />
+        <div className="srow">
+          <div className="srow__info">
+            <div className="srow__label">Theme</div>
+          </div>
+          <div className="srow__control">
+            <Segmented
+              options={[
+                { value: "auto", label: "Auto" },
+                { value: "light", label: "Light" },
+                { value: "dark", label: "Dark" },
+              ]}
+              value={theme}
+              onChange={(v) => update({ theme: v as Settings["theme"] })}
+            />
+          </div>
         </div>
       </div>
 
-      {/* ---------- 3b. Demo Mode ---------- */}
+      {/* ---------- 3. Demo Mode ---------- */}
       <div className="section-title">Demo Mode</div>
       <div className="card" data-tour="settings-demo">
-        <p className="muted fs-13 mb-1">
-          {demo
-            ? "You are looking at sample events right now. Nothing you add or change here is saved."
-            : "You are looking at your own data. Switch to sample events any time to see what a fully populated planner looks like, then switch back with nothing lost."}
-        </p>
-        <button className="btn btn--ghost" disabled={togglingDemo} onClick={() => void toggleDemo()}>
-          {togglingDemo ? "Switching…" : demo ? "Switch to my data" : "Preview sample events"}
-        </button>
+        <div className="srow">
+          <div className="srow__info">
+            <div className="srow__label">Sample events</div>
+            <div className="srow__hint">
+              {demo
+                ? "You are looking at sample events right now. Nothing you add or change here is saved."
+                : "You are looking at your own data. Switch to sample events any time to see what a fully populated planner looks like, then switch back with nothing lost."}
+            </div>
+          </div>
+          <div className="srow__control">
+            <button className="btn btn--ghost btn--auto" disabled={togglingDemo} onClick={() => void toggleDemo()}>
+              {togglingDemo ? "Switching…" : demo ? "Switch to my data" : "Preview sample events"}
+            </button>
+          </div>
+        </div>
       </div>
 
-      {/* ---------- 4. Quick Setup ---------- */}
-      <div className="section-title">Quick Setup</div>
+      {/* ---------- 4. Lists & Labels ---------- */}
+      <div className="section-title">Lists &amp; Labels</div>
       <div className="card" data-tour="settings-setup">
-        <div className="field__label mb-1">Categories</div>
-        <TagListEditor
-          values={categories}
-          onChange={(next) => update({ categories: next })}
-          placeholder="Add a category"
-          renderPrefix={(cName) => (
-            <button
-              type="button"
-              className="dot-9"
-              aria-label={`Change color for ${cName}`}
-              onClick={() => setCategoryColorFor((cur) => (cur === cName ? null : cName))}
-              style={{ background: categoryColor(cName), border: "none", padding: 0, cursor: "pointer" }}
-            />
-          )}
-        />
-        {categoryColorFor && categories.includes(categoryColorFor) && (
-          <div className="chip-row" style={{ margin: "2px 0 12px" }}>
-            {PICKABLE_CATEGORY_COLORS.map((c) => (
-              <button
-                key={c}
-                type="button"
-                aria-label={`Use this color for ${categoryColorFor}`}
-                onClick={() => {
-                  update({ categoryColors: { ...categoryColors, [categoryColorFor]: c } });
-                  setCategoryColorFor(null);
-                }}
-                style={{
-                  width: 26,
-                  height: 26,
-                  borderRadius: "50%",
-                  background: c,
-                  border: c === categoryColors[categoryColorFor] ? "2px solid var(--ink)" : "1px solid var(--hairline)",
-                  padding: 0,
-                  cursor: "pointer",
-                }}
-              />
-            ))}
+        <div className="taxblock">
+          <div className="taxhead">
+            <span className="taxhead__label">Categories</span>
+            <span className="taxhead__count">{categories.length}</span>
+            <span className="taxhead__hint">Used to color-code events</span>
           </div>
-        )}
-
-        <div className="love-divider" />
-
-        <div className="field__label mb-1">Event Types</div>
-        <TagListEditor
-          values={eventTypes}
-          onChange={(next) => update({ eventTypes: next })}
-          placeholder="Add an event type"
-        />
-
-        <div className="love-divider" />
-
-        <div className="field__label mb-1">Market / Regions</div>
-        <TagListEditor
-          values={marketRegions}
-          onChange={(next) => update({ marketRegions: next })}
-          placeholder="Add a market or region"
-        />
-
-        <div className="love-divider" />
-
-        <div className="field__label mb-1">States</div>
-        <TagListEditor values={states} onChange={(next) => update({ states: next })} placeholder="Add a state" />
-
-        <div className="love-divider" />
-
-        <div className="field__label mb-1">Owners</div>
-        <p className="muted fs-13 mb-1">
-          Owners also fills the "Owner" picker on Events and "Assigned To" on Tasks.
-        </p>
-        <TagListEditor values={owners} onChange={(next) => update({ owners: next })} placeholder="Add an owner" />
-
-        <div className="love-divider" />
-
-        <div className="field__label mb-1">Event Statuses</div>
-        <TagListEditor
-          values={eventStatuses}
-          onChange={(next) => update({ eventStatuses: next })}
-          placeholder="Add a status"
-          renderPrefix={(sName) => (
-            <button
-              type="button"
-              aria-label={`Change icon for ${sName}`}
-              onClick={() => setStatusIconFor((cur) => (cur === sName ? null : sName))}
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                border: "none",
-                background: "transparent",
-                padding: 0,
-                color: "inherit",
-                cursor: "pointer",
-              }}
-            >
-              <Icon name={eventStatusIcons[sName] ?? "circle"} size={14} />
-            </button>
-          )}
-        />
-        {statusIconFor && eventStatuses.includes(statusIconFor) && (
-          <div className="chip-row" style={{ margin: "2px 0 4px" }}>
-            {PICKABLE_ICON_NAMES.map((n) => (
+          <TagListEditor
+            values={categories}
+            onChange={(next) => update({ categories: next })}
+            placeholder="Add a category"
+            renderPrefix={(cName) => (
               <button
-                key={n}
                 type="button"
-                aria-label={`Use the ${n} icon for ${statusIconFor}`}
-                onClick={() => {
-                  update({ eventStatusIcons: { ...eventStatusIcons, [statusIconFor]: n } });
-                  setStatusIconFor(null);
-                }}
+                className="dot-9"
+                aria-label={`Change color for ${cName}`}
+                onClick={() => setCategoryColorFor((cur) => (cur === cName ? null : cName))}
+                style={{ background: categoryColor(cName), border: "none", padding: 0, cursor: "pointer" }}
+              />
+            )}
+          />
+          {categoryColorFor && categories.includes(categoryColorFor) && (
+            <div className="chip-row" style={{ margin: "10px 0 0" }}>
+              {PICKABLE_CATEGORY_COLORS.map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  aria-label={`Use this color for ${categoryColorFor}`}
+                  onClick={() => {
+                    update({ categoryColors: { ...categoryColors, [categoryColorFor]: c } });
+                    setCategoryColorFor(null);
+                  }}
+                  style={{
+                    width: 26,
+                    height: 26,
+                    borderRadius: "50%",
+                    background: c,
+                    border: c === categoryColors[categoryColorFor] ? "2px solid var(--ink)" : "1px solid var(--hairline)",
+                    padding: 0,
+                    cursor: "pointer",
+                  }}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="taxblock">
+          <div className="taxhead">
+            <span className="taxhead__label">Event Types</span>
+            <span className="taxhead__count">{eventTypes.length}</span>
+          </div>
+          <TagListEditor
+            values={eventTypes}
+            onChange={(next) => update({ eventTypes: next })}
+            placeholder="Add an event type"
+          />
+        </div>
+
+        <div className="taxblock">
+          <div className="taxhead">
+            <span className="taxhead__label">Market / Regions</span>
+            <span className="taxhead__count">{marketRegions.length}</span>
+          </div>
+          <TagListEditor
+            values={marketRegions}
+            onChange={(next) => update({ marketRegions: next })}
+            placeholder="Add a market or region"
+          />
+        </div>
+
+        <div className="taxblock">
+          <div className="taxhead">
+            <span className="taxhead__label">States</span>
+            <span className="taxhead__count">{states.length}</span>
+          </div>
+          <TagListEditor values={states} onChange={(next) => update({ states: next })} placeholder="Add a state" />
+        </div>
+
+        <div className="taxblock">
+          <div className="taxhead">
+            <span className="taxhead__label">Owners</span>
+            <span className="taxhead__count">{owners.length}</span>
+            <span className="taxhead__hint">Fills "Owner" on Events, "Assigned To" on Tasks</span>
+          </div>
+          <TagListEditor values={owners} onChange={(next) => update({ owners: next })} placeholder="Add an owner" />
+        </div>
+
+        <div className="taxblock">
+          <div className="taxhead">
+            <span className="taxhead__label">Event Statuses</span>
+            <span className="taxhead__count">{eventStatuses.length}</span>
+          </div>
+          <TagListEditor
+            values={eventStatuses}
+            onChange={(next) => update({ eventStatuses: next })}
+            placeholder="Add a status"
+            renderPrefix={(sName) => (
+              <button
+                type="button"
+                aria-label={`Change icon for ${sName}`}
+                onClick={() => setStatusIconFor((cur) => (cur === sName ? null : sName))}
                 style={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: 10,
-                  display: "grid",
-                  placeItems: "center",
-                  background: n === eventStatusIcons[statusIconFor] ? "var(--accent-soft)" : "var(--surface-2)",
-                  color: "var(--ink)",
+                  display: "inline-flex",
+                  alignItems: "center",
                   border: "none",
+                  background: "transparent",
+                  padding: 0,
+                  color: "inherit",
                   cursor: "pointer",
                 }}
               >
-                <Icon name={n} size={15} />
+                <Icon name={eventStatusIcons[sName] ?? "circle"} size={14} />
               </button>
-            ))}
+            )}
+          />
+          {statusIconFor && eventStatuses.includes(statusIconFor) && (
+            <div className="chip-row" style={{ margin: "10px 0 0" }}>
+              {PICKABLE_ICON_NAMES.map((n) => (
+                <button
+                  key={n}
+                  type="button"
+                  aria-label={`Use the ${n} icon for ${statusIconFor}`}
+                  onClick={() => {
+                    update({ eventStatusIcons: { ...eventStatusIcons, [statusIconFor]: n } });
+                    setStatusIconFor(null);
+                  }}
+                  style={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: 10,
+                    display: "grid",
+                    placeItems: "center",
+                    background: n === eventStatusIcons[statusIconFor] ? "var(--accent-soft)" : "var(--surface-2)",
+                    color: "var(--ink)",
+                    border: "none",
+                    cursor: "pointer",
+                  }}
+                >
+                  <Icon name={n} size={15} />
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="taxblock">
+          <div className="taxhead">
+            <span className="taxhead__label">Expense Categories</span>
+            <span className="taxhead__count">{expenseCategories.length}</span>
+            <span className="taxhead__hint">Feeds the Category picker on Budget</span>
           </div>
-        )}
-
-        <div className="love-divider" />
-
-        <div className="field__label mb-1">Expense Categories</div>
-        <p className="muted fs-13 mb-1">Feeds the Category picker when logging an expense on the Budget page.</p>
-        <TagListEditor
-          values={expenseCategories}
-          onChange={(next) => update({ expenseCategories: next })}
-          placeholder="Add an expense category"
-        />
+          <TagListEditor
+            values={expenseCategories}
+            onChange={(next) => update({ expenseCategories: next })}
+            placeholder="Add an expense category"
+          />
+        </div>
       </div>
 
       {/* ---------- 5. About ---------- */}
       <div className="section-title">About</div>
-      <div className="card">
-        <p className="muted fs-13 mb-1">
-          v{APP_VERSION}
+      <div className="about-line">
+        <span>
+          <b>Event Planner</b> v{APP_VERSION}
           {BUILD_SHA && ` · ${BUILD_SHA}`}
-        </p>
-        <button className="btn btn--ghost btn--stack" disabled={checkingUpdate} onClick={() => void checkForUpdates()}>
+        </span>
+        <span className="about-line__sep">·</span>
+        <button type="button" disabled={checkingUpdate} onClick={() => void checkForUpdates()}>
           {checkingUpdate ? "Checking…" : "Check for updates"}
         </button>
-        <button className="btn btn--ghost" onClick={() => navigate("privacy")}>
+        <span className="about-line__sep">·</span>
+        <button type="button" onClick={() => navigate("privacy")}>
           Privacy
         </button>
       </div>
@@ -579,7 +635,7 @@ export function SettingsScreen() {
       <div className="section-title" style={{ color: "var(--alert)", marginTop: 28 }}>
         Danger Zone
       </div>
-      <div className="card" data-tour="settings-danger" style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+      <div className="danger-card" data-tour="settings-danger" style={{ display: "flex", flexDirection: "column", gap: 18 }}>
         <div>
           <div className="fs-13" style={{ fontWeight: 700, marginBottom: 4 }}>
             Start over

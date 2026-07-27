@@ -283,16 +283,19 @@ specifically the gap between "solid" and "excellent."
 ## v1.0 — ship blockers
 - [x] ~~Create a real Google OAuth Web client ID and set `.env`~~ — done 2026-07-26;
   `VITE_GOOGLE_CLIENT_ID` is set in `.env` (gitignored, not pushed).
-- [ ] Declare the `drive.file` scope on the OAuth consent screen's Data Access page
-  (owner-only step, Google Cloud Console — still open).
+- [x] ~~Declare the `drive.file` scope on the OAuth consent screen's Data Access
+  page~~ — done; confirmed 2026-07-27 in the Google Auth Platform's Data Access tab:
+  listed under "Your non-sensitive scopes" (`../auth/drive.file`), zero sensitive
+  scopes, so no verification review is required.
 - [x] ~~Set real `VITE_ACCESS_CODES` for the Etsy listing~~ — done 2026-07-26; `.env`
   has a real code, no longer the placeholder.
 - [ ] Design/commission real app icons (the current icon set is a placeholder
   monogram generated locally — functional, on-brand, but not a final asset).
 - [x] ~~`git init` this repo~~ — done (owner's own call); `git log` shows real
-  commit history now. Still open: wire up `.github/workflows/deploy.yml` against a
-  real GitHub Pages target (set `secrets.VITE_GOOGLE_CLIENT_ID` /
-  `secrets.VITE_ACCESS_CODES`).
+  commit history now.
+- [x] ~~Wire up `.github/workflows/deploy.yml` against a real GitHub Pages
+  target~~ — done; live at eventsplanner.artivicolab.com (confirmed 2026-07-27,
+  serving a real build with recent fixes, e.g. the header gear icon).
 - [ ] Manual pass through every screen on a real phone (this build has been
   typechecked/tested/built but not yet clicked through end-to-end on-device).
 
