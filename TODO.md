@@ -200,16 +200,35 @@ specifically the gap between "solid" and "excellent."
   was dinged for documentation drift, not only missing tests.
 
 ### Design System Compliance ("First Love"/"Old Flame") — B- → A
-- [ ] Remove the literal heart icon at `Sidebar.tsx:118` — `<IconHeart size={16} />`
+- [x] Remove the literal heart icon at `Sidebar.tsx:118` — `<IconHeart size={16} />`
   renders unconditionally on the desktop Privacy nav row, a direct, visible violation
   of "no literal hearts anywhere in the UI." Swap for a non-heart icon.
-- [ ] Give dark mode its own dual-layer shadow recipe — `tokens.css:134` and the
+  **Fixed 2026-07-27:** swapped for `IconLock` (a conventional privacy/security glyph,
+  and already used elsewhere in the app) on the Privacy nav row.
+- [x] Give dark mode its own dual-layer shadow recipe — `tokens.css:134` and the
   duplicated `auto`/dark-mode branch at 182-183 use flat single-layer black
   (`0 10px 30px rgba(0,0,0,.5)`), not the tinted pink-contact + lavender-bloom recipe
   the light theme correctly implements at line 109.
-- [ ] Reconsider `heart: Heart` in `NAMED_ICONS` (`icons.tsx:116`) — a second, opt-in
+  **Fixed 2026-07-27:** gave dark mode the same dual-layer STRUCTURE, re-tinted for a
+  dark surface — a near-black contact shadow for grounding (a pink-tinted one just
+  looks muddy on dark) plus a soft lavender ambient bloom using dark theme's own
+  `--accent-2`, so cards still read as "Old Flame" glow rather than a flat generic
+  drop shadow. Applied to both the explicit `[data-theme="dark"]` block and the
+  `auto`/`prefers-color-scheme` duplicate. Verified visually (screenshot) — cards show
+  a soft glow against the dark background instead of a flat shadow.
+- [x] Reconsider `heart: Heart` in `NAMED_ICONS` (`icons.tsx:116`) — a second, opt-in
   path for a literal heart to appear via custom Event Status icons, contradicting the
   blanket rule even though it's user-chosen rather than forced.
+  **Fixed 2026-07-27:** removed the `heart` entry from `NAMED_ICONS` (confirmed no
+  sample/default data referenced it), and removed the now-fully-unused `IconHeart`
+  alias and its `Heart` import from `icons.tsx`.
+- [x] (Found in the 2026-07-27 re-grade, not the original list above) `.sidebar__item--on`
+  (`base.css:285`) used the pastel `--accent-soft`/`--accent-2-soft` tokens instead of
+  the full-strength `--accent`/`--accent-2` pair the spec names as shared with
+  `.btn--primary`/`.chip--on` — the code comment directly above it already said it was
+  *supposed to* match. **Fixed 2026-07-27:** switched to the full-strength gradient
+  and `color: #fff` (matching `.btn--primary`/`.chip--on`'s own text-color pattern for
+  that gradient). Verified visually.
 
 ### Feature Completeness — B+ → A
 - [ ] Fix `TaskSheet.tsx:66` (`canSave` requires non-empty `eventId`) and its event
@@ -234,15 +253,32 @@ specifically the gap between "solid" and "excellent."
   the accepted risk explicitly.
 
 ### Code Quality — A- → A
-- [ ] Remove confirmed dead code: unused `suspendSync()`/`resumeSync()` exports
+- [x] Remove confirmed dead code: unused `suspendSync()`/`resumeSync()` exports
   (`sync.ts:160`), unused `Columns` chart component (`Charts.tsx:176`), 5 unused date
   helpers + 3 unused re-exports (`dates.ts:52`), unused `APP_NAME` (`config.ts:7`,
   string hardcoded elsewhere instead), unused `SCHEMA_VERSION` (`schema.ts:9`),
   unused `currentToken()` (`google/auth.ts:196`), 10 unused icon aliases
   (`icons.tsx:92`).
-- [ ] Have `GuestsScreen.tsx:256` and `SeatingScreen.tsx:32` reuse `ui.ts`'s exported
+  **Fixed 2026-07-27:** all removed, each re-verified with a repo-wide grep for zero
+  remaining call sites first. `suspendSync()`/`resumeSync()` got the closer look —
+  the `syncSuspended` flag they set IS read at both push guard sites, but the only
+  caller of `loadSampleIntoStores()` (the "swap in sample data" path the comment
+  describes protecting against) always sets `isDemo()` true *before* calling it at
+  every call site in `bootstrap.ts`, so the flag was provably always `false` — a
+  dead safety net for a gap that doesn't exist in the current code, not just unused
+  code. Simplified both guards from `isDemo() || syncSuspended` back to `isDemo()`.
+  Only 8 of the reported 10 icon aliases were actually dead (`IconPlayCircle`/
+  `IconPauseCircle` turned out to have real call sites) — kept those two.
+- [x] Have `GuestsScreen.tsx:256` and `SeatingScreen.tsx:32` reuse `ui.ts`'s exported
   `pct()`/`hashColor()` instead of reimplementing them inline, leaving the real
   helpers unused.
+  **Fixed 2026-07-27:** exported `ui.ts`'s previously-private `hashColor(key, pool)`
+  and added a new exported `initials(name)` (also duplicated verbatim in
+  `EventsScreen.tsx`/`TasksScreen.tsx`/`GuestsScreen.tsx`, per the regrade's nit list).
+  Removed all 4 local reimplementations across `GuestsScreen.tsx`, `SeatingScreen.tsx`,
+  `EventsScreen.tsx`, and `TasksScreen.tsx`, and renamed `GuestsScreen.tsx`'s local
+  `pct` variable to `seatedPct` so it could actually call the imported `pct()` helper
+  instead of shadowing it with an inline reimplementation.
 
 ## v1.0 — ship blockers
 - [x] ~~Create a real Google OAuth Web client ID and set `.env`~~ — done 2026-07-26;

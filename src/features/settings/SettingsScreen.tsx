@@ -249,7 +249,112 @@ export function SettingsScreen() {
       <h1 className="page-title">Settings</h1>
       <p className="page-sub">Make Event Planner yours.</p>
 
-      {/* ---------- 1. Preferences ---------- */}
+      {/* ---------- 1. Access code ---------- */}
+      <div className="section-title">Access Code</div>
+      <div className="card">
+        {activated ? (
+          <p className="fs-13" style={{ color: "var(--success)", fontWeight: 700, margin: 0 }}>
+            Activated
+          </p>
+        ) : (
+          <>
+            <p className="muted fs-13 mb-1">Enter the code from your Etsy order to unlock Google Sheets sync.</p>
+            <div className="spread spread--gap8">
+              <input
+                className="input"
+                value={accessCodeInput}
+                placeholder="Access code"
+                aria-label="Access code"
+                onChange={(e) => setAccessCodeInput(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && void submitAccessCode()}
+              />
+              <button className="btn btn--auto" disabled={!accessCodeInput.trim()} onClick={() => void submitAccessCode()}>
+                Unlock
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* ---------- 2. Google Sheets ---------- */}
+      <div className="section-title">Google Sheets</div>
+      <div className="card" data-tour="settings-sheets">
+        {!hasClientId ? (
+          <>
+            <p className="muted fs-13 mb-1">
+              Google Sheets sync isn't set up in this build yet, everything still works fully offline.
+            </p>
+            <button className="btn btn--primary" disabled>
+              Connect Google
+            </button>
+          </>
+        ) : connected ? (
+          <>
+            <p className="muted fs-13 mb-1">Connected. Your data lives in your own Google Drive.</p>
+            <a className="btn btn--ghost btn--stack" href={spreadsheetUrl(spreadsheetId)} target="_blank" rel="noreferrer">
+              Open my sheet
+            </a>
+            <button className="btn btn--primary btn--stack" disabled={busy} onClick={() => void syncNow(true)}>
+              {busy ? "Syncing…" : "Sync now"}
+            </button>
+            <button className="btn btn--ghost" onClick={() => disconnect()}>
+              Disconnect
+            </button>
+          </>
+        ) : (
+          <>
+            <button className="btn btn--primary btn--stack" disabled={busy} onClick={() => void connect()}>
+              {busy ? "Connecting…" : "Connect Google"}
+            </button>
+            <button className="btn btn--ghost" onClick={() => setRelinkOpen((v) => !v)}>
+              Already have a sheet on another device?
+            </button>
+            {relinkOpen && (
+              <div className="field" style={{ marginTop: 12, marginBottom: 0 }}>
+                <label className="field__label" htmlFor="set-relink">
+                  Sheet link or ID
+                </label>
+                <div className="spread spread--gap8">
+                  <input
+                    id="set-relink"
+                    className="input"
+                    value={relinkValue}
+                    placeholder="https://docs.google.com/spreadsheets/d/…"
+                    onChange={(e) => setRelinkValue(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && void submitRelink()}
+                  />
+                  <button className="btn btn--auto" disabled={busy || !relinkValue.trim()} onClick={() => void submitRelink()}>
+                    {busy ? "Linking…" : "Link this sheet"}
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+
+        {wrongAccount && (
+          <div style={{ marginTop: 12 }}>
+            <p className="fs-13" style={{ color: "var(--alert)" }}>
+              {error || "This Google account doesn't have access to your existing sheet."}
+            </p>
+            <div className="spread spread--gap8" style={{ marginTop: 8 }}>
+              <button className="btn btn--auto" disabled={busy} onClick={() => void useThisAccountInstead()}>
+                Try a different account
+              </button>
+              <button className="btn btn--auto btn--ghost" disabled={busy} onClick={() => void handleStartNewSheet()}>
+                Start a new sheet with this account
+              </button>
+            </div>
+          </div>
+        )}
+        {!wrongAccount && error && (
+          <p className="fs-13" style={{ color: "var(--alert)", marginTop: 10 }}>
+            {error}
+          </p>
+        )}
+      </div>
+
+      {/* ---------- 3. Preferences ---------- */}
       <div className="section-title">Preferences</div>
       <div className="card">
         <div className="field">
@@ -302,7 +407,7 @@ export function SettingsScreen() {
         </div>
       </div>
 
-      {/* ---------- 1b. Demo Mode ---------- */}
+      {/* ---------- 3b. Demo Mode ---------- */}
       <div className="section-title">Demo Mode</div>
       <div className="card" data-tour="settings-demo">
         <p className="muted fs-13 mb-1">
@@ -315,7 +420,7 @@ export function SettingsScreen() {
         </button>
       </div>
 
-      {/* ---------- 2. Quick Setup ---------- */}
+      {/* ---------- 4. Quick Setup ---------- */}
       <div className="section-title">Quick Setup</div>
       <div className="card" data-tour="settings-setup">
         <div className="field__label mb-1">Categories</div>
@@ -453,111 +558,6 @@ export function SettingsScreen() {
           onChange={(next) => update({ expenseCategories: next })}
           placeholder="Add an expense category"
         />
-      </div>
-
-      {/* ---------- 3. Google Sheets ---------- */}
-      <div className="section-title">Google Sheets</div>
-      <div className="card" data-tour="settings-sheets">
-        {!hasClientId ? (
-          <>
-            <p className="muted fs-13 mb-1">
-              Google Sheets sync isn't set up in this build yet, everything still works fully offline.
-            </p>
-            <button className="btn btn--primary" disabled>
-              Connect Google
-            </button>
-          </>
-        ) : connected ? (
-          <>
-            <p className="muted fs-13 mb-1">Connected. Your data lives in your own Google Drive.</p>
-            <a className="btn btn--ghost btn--stack" href={spreadsheetUrl(spreadsheetId)} target="_blank" rel="noreferrer">
-              Open my sheet
-            </a>
-            <button className="btn btn--primary btn--stack" disabled={busy} onClick={() => void syncNow(true)}>
-              {busy ? "Syncing…" : "Sync now"}
-            </button>
-            <button className="btn btn--ghost" onClick={() => disconnect()}>
-              Disconnect
-            </button>
-          </>
-        ) : (
-          <>
-            <button className="btn btn--primary btn--stack" disabled={busy} onClick={() => void connect()}>
-              {busy ? "Connecting…" : "Connect Google"}
-            </button>
-            <button className="btn btn--ghost" onClick={() => setRelinkOpen((v) => !v)}>
-              Already have a sheet on another device?
-            </button>
-            {relinkOpen && (
-              <div className="field" style={{ marginTop: 12, marginBottom: 0 }}>
-                <label className="field__label" htmlFor="set-relink">
-                  Sheet link or ID
-                </label>
-                <div className="spread spread--gap8">
-                  <input
-                    id="set-relink"
-                    className="input"
-                    value={relinkValue}
-                    placeholder="https://docs.google.com/spreadsheets/d/…"
-                    onChange={(e) => setRelinkValue(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && void submitRelink()}
-                  />
-                  <button className="btn btn--auto" disabled={busy || !relinkValue.trim()} onClick={() => void submitRelink()}>
-                    {busy ? "Linking…" : "Link this sheet"}
-                  </button>
-                </div>
-              </div>
-            )}
-          </>
-        )}
-
-        {wrongAccount && (
-          <div style={{ marginTop: 12 }}>
-            <p className="fs-13" style={{ color: "var(--alert)" }}>
-              {error || "This Google account doesn't have access to your existing sheet."}
-            </p>
-            <div className="spread spread--gap8" style={{ marginTop: 8 }}>
-              <button className="btn btn--auto" disabled={busy} onClick={() => void useThisAccountInstead()}>
-                Try a different account
-              </button>
-              <button className="btn btn--auto btn--ghost" disabled={busy} onClick={() => void handleStartNewSheet()}>
-                Start a new sheet with this account
-              </button>
-            </div>
-          </div>
-        )}
-        {!wrongAccount && error && (
-          <p className="fs-13" style={{ color: "var(--alert)", marginTop: 10 }}>
-            {error}
-          </p>
-        )}
-      </div>
-
-      {/* ---------- 4. Access code ---------- */}
-      <div className="section-title">Access Code</div>
-      <div className="card">
-        {activated ? (
-          <p className="fs-13" style={{ color: "var(--success)", fontWeight: 700, margin: 0 }}>
-            Activated
-          </p>
-        ) : (
-          <>
-            <p className="muted fs-13 mb-1">Enter the code from your Etsy order to unlock Google Sheets sync.</p>
-            <div className="spread spread--gap8">
-              <input
-                className="input"
-                value={accessCodeInput}
-                placeholder="Access code"
-                aria-label="Access code"
-                onChange={(e) => setAccessCodeInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && void submitAccessCode()}
-              />
-              <button className="btn btn--auto" disabled={!accessCodeInput.trim()} onClick={() => void submitAccessCode()}>
-                Unlock
-              </button>
-            </div>
-          </>
-        )}
       </div>
 
       {/* ---------- 5. About ---------- */}
