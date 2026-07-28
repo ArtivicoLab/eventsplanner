@@ -407,9 +407,23 @@ img { max-width: 100%; display: block; }
 /* The brand mark doubles as the live-ticker on/off toggle on mobile — tap
    the "E" to turn it back on after closing it, same idea as the ticker's
    own close button but reachable even after the ticker itself is gone. */
-.tabbar__brandbtn { border: none; background: none; padding: 4px; flex: none; cursor: pointer; }
+.tabbar__brandbtn {
+  border: none;
+  background: none;
+  flex: none;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 6px 4px;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--muted);
+}
 .tabbar__brand { border-radius: 7px; box-shadow: 0 4px 12px color-mix(in srgb, var(--accent) 30%, transparent); }
 .tabbar__brandbtn--off .tabbar__brand { opacity: 0.45; filter: grayscale(70%); box-shadow: none; }
+.tabbar__brandbtn--off { color: var(--muted); opacity: 0.6; }
 .tabbar__scroll { display: flex; flex: 1; overflow-x: auto; gap: 2px; }
 .tabbar__btn {
   flex: 1;
@@ -448,6 +462,11 @@ img { max-width: 100%; display: block; }
   place-items: center;
   z-index: 1;
 }
+/* A plain item count (e.g. "11 events"), not an alert — the softer accent
+   fill matches the desktop Sidebar's own .sidebar__badge for the same
+   number, rather than --alert red, which this app reserves for genuinely
+   urgent states (Cancelled, overdue) and would misread as "something's
+   wrong" here. */
 .navbadge {
   position: absolute;
   top: -6px;
@@ -456,7 +475,7 @@ img { max-width: 100%; display: block; }
   height: 15px;
   padding: 0 3px;
   border-radius: var(--r-pill);
-  background: var(--alert);
+  background: var(--accent);
   color: #fff;
   font-size: 9px;
   font-weight: 800;
@@ -1583,7 +1602,6 @@ img { max-width: 100%; display: block; }
     radial-gradient(circle, var(--hairline) 1px, transparent 1px) 0 0 / 22px 22px,
     var(--surface);
   overflow: auto;
-  touch-action: none;
 }
 .seatroom {
   position: absolute;
@@ -1615,6 +1633,14 @@ img { max-width: 100%; display: block; }
   text-align: center;
   padding: 4px;
   gap: 2px;
+  /* Scoped to just the draggable table itself, not the whole .seatcanvas —
+     this is what lets startDrag()'s pointermove logic reposition a table
+     without the browser ALSO trying to pan/scroll mid-drag. Putting this on
+     the whole canvas instead (the previous bug) blocked the browser's own
+     touch-scroll everywhere on the canvas, including empty space between
+     tables, so a phone's "swipe to see the rest of the floor plan" gesture
+     never reached .seatcanvas__scroll's overflow-x: auto at all. */
+  touch-action: none;
 }
 .seatroom__shape--round { inset: 26px; border-radius: 50%; }
 .seatroom__shape--square { inset: 26px; border-radius: 14px; }
