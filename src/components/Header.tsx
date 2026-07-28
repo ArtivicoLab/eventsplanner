@@ -61,7 +61,7 @@ export function Header() {
           <img src="/favicon-96x96.png" alt="" aria-hidden width={22} height={22} className="appbar__brandimg" />
         </button>
         Event Planner
-        {demo && <span className="brand-demo" data-tour="demo-badge">Demo</span>}
+        {/* "Demo" badge temporarily disabled for Etsy listing screenshots — restore: demo && <span className="brand-demo" data-tour="demo-badge">Demo</span> */}
       </span>
       <span className="appbar__spacer" />
       {!demo && (clickable ? (
