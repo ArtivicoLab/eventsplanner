@@ -7,5 +7,6 @@ export const useGuests = createCrud<Guest>("guests", () => ({
   roomId: "",
   seatIndex: -1,
   arrivalTime: "",
+  arrived: false,
   notes: "",
 }));

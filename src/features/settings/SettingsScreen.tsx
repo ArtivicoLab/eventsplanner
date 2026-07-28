@@ -5,7 +5,7 @@
 import { useState } from "react";
 import { Segmented } from "../../components/Segmented";
 import { LockGatedButton } from "../../components/LockGatedButton";
-import { Icon, IconClose, PICKABLE_ICON_NAMES } from "../../components/icons";
+import { Icon, IconClose, IconPlus, PICKABLE_ICON_NAMES } from "../../components/icons";
 import { useSettings } from "../../stores/useSettings";
 import { useSync } from "../../stores/useSync";
 import { confirmDialog } from "../../stores/useConfirm";
@@ -29,11 +29,12 @@ function formatWait(ms: number): string {
 }
 
 /**
- * An editable list of tags: existing entries as removable chips, plus a
- * text input + Add button (Enter also works) that appends a trimmed,
- * deduplicated, non-empty value. `renderPrefix` lets a caller (Categories,
- * Event Statuses) draw something clickable — a color dot, an icon — before
- * each chip's label.
+ * An editable list of tags, mockup-style: existing entries as chips with a
+ * small circular remove button, plus a dashed "+ Add …" chip that turns into
+ * an inline input when tapped. Enter adds (and keeps the input open for rapid
+ * entry); Escape or clicking away closes it. Values are trimmed and
+ * deduplicated. `renderPrefix` lets a caller (Categories, Event Statuses)
+ * draw something clickable — a color dot, an icon — before each chip's label.
  */
 function TagListEditor({
   values,
@@ -46,16 +47,15 @@ function TagListEditor({
   placeholder: string;
   renderPrefix?: (name: string) => React.ReactNode;
 }) {
+  const [adding, setAdding] = useState(false);
   const [text, setText] = useState("");
 
-  function add() {
+  function commit(): boolean {
     const v = text.trim();
-    if (!v || values.includes(v)) {
-      setText("");
-      return;
-    }
-    onChange([...values, v]);
     setText("");
+    if (!v || values.includes(v)) return false;
+    onChange([...values, v]);
+    return true;
   }
 
   function remove(name: string) {
@@ -63,36 +63,20 @@ function TagListEditor({
   }
 
   return (
-    <div>
-      {values.length > 0 && (
-        <div className="chip-row" style={{ marginBottom: 10 }}>
-          {values.map((v) => (
-            <span key={v} className="chip">
-              {renderPrefix?.(v)}
-              {v}
-              <button
-                type="button"
-                aria-label={`Remove ${v}`}
-                onClick={() => remove(v)}
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  border: "none",
-                  background: "transparent",
-                  padding: 0,
-                  color: "inherit",
-                  cursor: "pointer",
-                }}
-              >
-                <IconClose size={12} />
-              </button>
-            </span>
-          ))}
-        </div>
-      )}
-      <div className="spread spread--gap8">
+    <div className="chip-row">
+      {values.map((v) => (
+        <span key={v} className="chip">
+          {renderPrefix?.(v)}
+          {v}
+          <button type="button" className="chip__x" aria-label={`Remove ${v}`} onClick={() => remove(v)}>
+            <IconClose size={10} />
+          </button>
+        </span>
+      ))}
+      {adding ? (
         <input
-          className="input"
+          className="chip-input"
+          autoFocus
           value={text}
           placeholder={placeholder}
           aria-label={placeholder}
@@ -100,14 +84,23 @@ function TagListEditor({
           onKeyDown={(e) => {
             if (e.key === "Enter") {
               e.preventDefault();
-              add();
+              commit();
+            } else if (e.key === "Escape") {
+              setText("");
+              setAdding(false);
             }
           }}
+          onBlur={() => {
+            commit();
+            setAdding(false);
+          }}
         />
-        <button type="button" className="btn btn--auto" disabled={!text.trim()} onClick={add}>
-          Add
+      ) : (
+        <button type="button" className="chip chip--add" onClick={() => setAdding(true)}>
+          <IconPlus size={13} />
+          {placeholder}
         </button>
-      </div>
+      )}
     </div>
   );
 }
@@ -137,6 +130,9 @@ export function SettingsScreen() {
     busy,
     error,
     wrongAccount,
+    status,
+    pending,
+    needsReauth,
     connect,
     relink,
     disconnect,
@@ -146,6 +142,19 @@ export function SettingsScreen() {
   } = useSync();
   const { show } = useToast();
   const demo = useDemo((s) => s.demo);
+
+  const syncPillCls = needsReauth || status === "offline"
+    ? "syncpill--off"
+    : status === "synced" ? "syncpill--ok" : "syncpill--busy";
+  const syncPillText = needsReauth
+    ? "Reconnect needed"
+    : status === "offline" && pending > 0
+      ? `Offline · ${pending}`
+      : !connected && status === "synced"
+        ? "Saved"
+        : status === "syncing"
+          ? "Syncing…"
+          : "Synced";
 
   const [relinkOpen, setRelinkOpen] = useState(false);
   const [relinkValue, setRelinkValue] = useState("");
@@ -245,8 +254,16 @@ export function SettingsScreen() {
   }
 
   return (
-    <div>
-      <h1 className="page-title">Settings</h1>
+    <div className="settings">
+      <div className="spread" style={{ alignItems: "flex-start" }}>
+        <h1 className="page-title" style={{ marginBottom: 0 }}>Settings</h1>
+        {!demo && (
+          <span className={`syncpill ${syncPillCls}`}>
+            <span className="syncpill__dot" />
+            {syncPillText} · v{APP_VERSION}
+          </span>
+        )}
+      </div>
       <p className="page-sub">Make Event Planner yours.</p>
 
       {/* ---------- 1. Account & Sync (access code + Google Sheets, merged) ---------- */}
@@ -259,7 +276,7 @@ export function SettingsScreen() {
           </div>
           <div className="srow__control">
             {activated ? (
-              <span className="status-pill status-pill--ok">Activated</span>
+              <span className="status-pill status-pill--ok">✓ Activated</span>
             ) : (
               <div className="spread spread--gap8">
                 <input
@@ -296,7 +313,7 @@ export function SettingsScreen() {
               </button>
             ) : connected ? (
               <>
-                <a className="btn btn--ghost btn--auto" href={spreadsheetUrl(spreadsheetId)} target="_blank" rel="noreferrer">
+                <a className="btn btn--link btn--auto" href={spreadsheetUrl(spreadsheetId)} target="_blank" rel="noreferrer">
                   Open my sheet
                 </a>
                 <button className="btn btn--primary btn--auto" disabled={busy} onClick={() => void syncNow(true)}>
@@ -632,35 +649,39 @@ export function SettingsScreen() {
       </div>
 
       {/* ---------- 6. Danger Zone ---------- */}
-      <div className="section-title" style={{ color: "var(--alert)", marginTop: 28 }}>
+      <div className="section-title" style={{ color: "var(--alert)" }}>
         Danger Zone
       </div>
-      <div className="danger-card" data-tour="settings-danger" style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-        <div>
-          <div className="fs-13" style={{ fontWeight: 700, marginBottom: 4 }}>
-            Start over
+      <div className="danger-card" data-tour="settings-danger">
+        <div className="srow">
+          <div className="srow__info">
+            <div className="srow__label">Start over</div>
+            <div className="srow__hint">
+              Erase every event, task, expense, seating chart, and guest on this device. This can't be undone.
+            </div>
           </div>
-          <p className="muted fs-13 mb-1">
-            Erase every event, task, expense, seating chart, and guest on this device. This can't be undone.
-          </p>
-          <LockGatedButton label="Start over" danger onConfirm={() => void handleStartOver()} />
+          <div className="srow__control">
+            <LockGatedButton label="Start over" danger onConfirm={() => void handleStartOver()} />
+          </div>
         </div>
         {connected && (
-          <div>
-            <div className="fs-13" style={{ fontWeight: 700, marginBottom: 4 }}>
-              Disconnect and clear this device
+          <div className="srow">
+            <div className="srow__info">
+              <div className="srow__label">Disconnect and clear this device</div>
+              <div className="srow__hint">
+                Push any last changes to your Sheet, then remove your data from this device only. Your Sheet keeps
+                everything.
+              </div>
             </div>
-            <p className="muted fs-13 mb-1">
-              Push any last changes to your Sheet, then remove your data from this device only. Your Sheet keeps
-              everything.
-            </p>
-            <LockGatedButton
-              label="Disconnect and clear this device"
-              danger
-              busy={clearingDevice}
-              busyLabel="Clearing…"
-              onConfirm={() => void handleDisconnectClear()}
-            />
+            <div className="srow__control">
+              <LockGatedButton
+                label="Disconnect & clear"
+                danger
+                busy={clearingDevice}
+                busyLabel="Clearing…"
+                onConfirm={() => void handleDisconnectClear()}
+              />
+            </div>
           </div>
         )}
       </div>

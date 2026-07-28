@@ -257,26 +257,72 @@ export function buildSample(): Seed {
   const table4 = room("Table 4", "round", 6, 78, 55);
   const rooms: Room[] = [headTable, familyTable, friendsTable, table4];
 
-  function guest(name: string, roomId: string, seatIndex: number, arrivalTime = "", notes = ""): Guest {
-    return { id: newId(), eventId: vowsDay.id, name, roomId, seatIndex, arrivalTime, notes, createdAt: ts, updatedAt: ts };
+  function guest(
+    eventId: string,
+    name: string,
+    roomId: string,
+    seatIndex: number,
+    arrivalTime = "",
+    notes = "",
+    arrived = false
+  ): Guest {
+    return { id: newId(), eventId, name, roomId, seatIndex, arrivalTime, arrived, notes, createdAt: ts, updatedAt: ts };
   }
-  const guests: Guest[] = [
-    guest("Jessica Miller", headTable.id, 0, "13:00", "Bride"),
-    guest("David Brown", headTable.id, 1, "13:00", "Groom"),
-    guest("Sarah Williams", headTable.id, 2, "13:00", "Maid of honor"),
-    guest("Matthew Davis", headTable.id, 3, "13:00", "Best man"),
-    guest("Olivia Taylor", familyTable.id, 0, "14:00"),
-    guest("John Carter", familyTable.id, 1, "14:00"),
-    guest("Sophia Wilson", familyTable.id, 2, "14:15"),
-    guest("Michael Smith", familyTable.id, 3, "14:15", "Vegetarian"),
-    guest("Emily Johnson", friendsTable.id, 0, "14:30"),
-    guest("Chris Anderson", friendsTable.id, 1, "14:30"),
-    guest("Priya Patel", friendsTable.id, 2, "14:30", "Gluten-free"),
-    guest("Marcus Lee", table4.id, 0, "14:45"),
-    guest("Grace Kim", table4.id, 1, "14:45"),
-    guest("Noah Rivera", "", -1),
-    guest("Ava Thompson", "", -1, "", "+1"),
+  const weddingGuests: Guest[] = [
+    guest(vowsDay.id, "Jessica Miller", headTable.id, 0, "13:00", "Bride"),
+    guest(vowsDay.id, "David Brown", headTable.id, 1, "13:00", "Groom"),
+    guest(vowsDay.id, "Sarah Williams", headTable.id, 2, "13:00", "Maid of honor"),
+    guest(vowsDay.id, "Matthew Davis", headTable.id, 3, "13:00", "Best man"),
+    guest(vowsDay.id, "Olivia Taylor", familyTable.id, 0, "14:00"),
+    guest(vowsDay.id, "John Carter", familyTable.id, 1, "14:00"),
+    guest(vowsDay.id, "Sophia Wilson", familyTable.id, 2, "14:15"),
+    guest(vowsDay.id, "Michael Smith", familyTable.id, 3, "14:15", "Vegetarian"),
+    guest(vowsDay.id, "Emily Johnson", friendsTable.id, 0, "14:30"),
+    guest(vowsDay.id, "Chris Anderson", friendsTable.id, 1, "14:30"),
+    guest(vowsDay.id, "Priya Patel", friendsTable.id, 2, "14:30", "Gluten-free"),
+    guest(vowsDay.id, "Marcus Lee", table4.id, 0, "14:45"),
+    guest(vowsDay.id, "Grace Kim", table4.id, 1, "14:45"),
+    guest(vowsDay.id, "Noah Rivera", "", -1),
+    guest(vowsDay.id, "Ava Thompson", "", -1, "", "+1"),
   ];
+
+  // ---- Live-feed sample: Tech Summit's registration desk ----
+  // Tech Summit (offset -2, span 4) is always "live" the moment the demo
+  // loads, so this is the roster that actually shows up in the Sidebar/
+  // LiveTicker's rotating feed. A conference check-in list rather than a
+  // seating chart on purpose — attendees don't need assigned seats, just an
+  // arrival record — so every guest here stays unseated (roomId "").
+  // Deliberately staggered across 3 states so the feed demonstrates all of
+  // them at once: already checked in (`arrived: true`, feed skips them),
+  // checking in right now, and checking in later — plus one walk-up with no
+  // pre-registered time at all, same as Vows Day's Noah/Ava above.
+  function attendee(name: string, arrivalTime: string, arrived: boolean, notes = ""): Guest {
+    return guest(techSummit.id, name, "", -1, arrivalTime, notes, arrived);
+  }
+  const registrationDesk: Guest[] = [
+    // Already checked in — Live feed correctly has nothing to say about these.
+    attendee("Grace Liu", "08:00", true, "Speaker"),
+    attendee("Daniel Osei", "08:10", true),
+    attendee("Priya Nair", "08:20", true, "Sponsor"),
+    attendee("Tomas Herrera", "08:30", true),
+    attendee("Hannah Fischer", "08:40", true),
+    // Still arriving — this is the pool the Live feed actually draws from.
+    attendee("Marcus Webb", "08:50", false),
+    attendee("Ling Zhao", "09:00", false, "Press"),
+    attendee("Aiden Murphy", "09:05", false),
+    attendee("Freya Larsen", "09:15", false),
+    attendee("Diego Alvarez", "09:30", false),
+    attendee("Chloe Bennett", "09:40", false),
+    attendee("Omar Farouk", "09:50", false, "Sponsor"),
+    attendee("Ingrid Solberg", "10:00", false),
+    attendee("Kwame Mensah", "10:15", false),
+    attendee("Rosa Delgado", "10:30", false),
+    // Walked up without a pre-registered slot — same convention as Vows Day's
+    // Noah/Ava: a real, valid guest with no arrivalTime set.
+    attendee("Leo Tanaka", "", false, "Walk-in registration"),
+  ];
+
+  const guests: Guest[] = [...weddingGuests, ...registrationDesk];
 
   return { events, eventTasks, expenses, rooms, guests };
 }

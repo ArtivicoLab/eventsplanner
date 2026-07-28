@@ -5,6 +5,7 @@
 // concern; this sheet only owns who a guest is, which event, when they arrive.
 import { useEffect, useMemo, useState } from "react";
 import { BottomSheet } from "../../components/BottomSheet";
+import { Checkbox } from "../../components/Checkbox";
 import { useEvents } from "../../stores/useEvents";
 import { useGuests } from "../../stores/useGuests";
 import { confirmDialog } from "../../stores/useConfirm";
@@ -35,6 +36,7 @@ export function GuestSheet({ open, guestId, defaultEventId, onClose }: Props) {
   const [eventId, setEventId] = useState("");
   const [name, setName] = useState("");
   const [arrivalTime, setArrivalTime] = useState("");
+  const [arrived, setArrived] = useState(false);
   const [notes, setNotes] = useState("");
 
   // Reset (or prefill) on every open transition, never just first mount, or a
@@ -45,11 +47,13 @@ export function GuestSheet({ open, guestId, defaultEventId, onClose }: Props) {
       setEventId(editing.eventId);
       setName(editing.name);
       setArrivalTime(editing.arrivalTime);
+      setArrived(editing.arrived);
       setNotes(editing.notes);
     } else {
       setEventId(defaultEventId || sortedEvents[0]?.id || "");
       setName("");
       setArrivalTime("");
+      setArrived(false);
       setNotes("");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -64,11 +68,11 @@ export function GuestSheet({ open, guestId, defaultEventId, onClose }: Props) {
       // belongs to the old event's floor plan and means nothing on the new one.
       const patch =
         eventId !== editing.eventId
-          ? { eventId, name: name.trim(), arrivalTime, notes: notes.trim(), roomId: "", seatIndex: -1 }
-          : { eventId, name: name.trim(), arrivalTime, notes: notes.trim() };
+          ? { eventId, name: name.trim(), arrivalTime, arrived, notes: notes.trim(), roomId: "", seatIndex: -1 }
+          : { eventId, name: name.trim(), arrivalTime, arrived, notes: notes.trim() };
       update(editing.id, patch);
     } else {
-      add({ eventId, name: name.trim(), roomId: "", seatIndex: -1, arrivalTime, notes: notes.trim() });
+      add({ eventId, name: name.trim(), roomId: "", seatIndex: -1, arrivalTime, arrived, notes: notes.trim() });
     }
     onClose();
   }
@@ -127,6 +131,13 @@ export function GuestSheet({ open, guestId, defaultEventId, onClose }: Props) {
           value={arrivalTime}
           onChange={(e) => setArrivalTime(e.target.value)}
         />
+      </div>
+
+      <div className="field" style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <Checkbox checked={arrived} onChange={() => setArrived((v) => !v)} label="Mark as arrived" />
+        <label className="field__label" style={{ margin: 0, cursor: "pointer" }} onClick={() => setArrived((v) => !v)}>
+          Arrived
+        </label>
       </div>
 
       <div className="field">

@@ -104,6 +104,11 @@ export interface Guest {
   roomId: string; // "" = unseated
   seatIndex: number;
   arrivalTime: string; // "HH:mm", "" = not set — same free-form convention as Event's startTime/endTime
+  // Whether this guest has actually checked in, distinct from `arrivalTime`
+  // (their scheduled/expected time). Toggled by hand at the door — the app
+  // has no way to detect a real-world arrival on its own. Once true, the
+  // Live feed stops surfacing them as "arriving soon" (see useLiveFeed.ts).
+  arrived: boolean;
   notes: string; // dietary notes, +1, etc.
   createdAt: string;
   updatedAt: string;

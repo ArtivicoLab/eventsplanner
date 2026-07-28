@@ -66,6 +66,7 @@ const guest = {
   roomId: "room1",
   seatIndex: 2,
   arrivalTime: "14:30",
+  arrived: true,
   notes: "Gluten-free",
   createdAt: "2025-08-01T00:00:00.000Z",
   updatedAt: "2025-08-02T00:00:00.000Z",

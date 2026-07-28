@@ -41,9 +41,12 @@ export const HEADERS: Record<string, string[]> = {
   // existing column's meaning intact instead of shifting them.
   [TAB.Expenses]: ["id", "eventId", "date", "amount", "details", "createdAt", "updatedAt", "category"],
   [TAB.Rooms]: ["id", "eventId", "name", "shape", "seats", "x", "y", "createdAt", "updatedAt"],
-  // "arrivalTime" appended at the end, same backward-compat reason as
-  // Expenses' "category" above.
-  [TAB.Guests]: ["id", "eventId", "name", "roomId", "seatIndex", "notes", "createdAt", "updatedAt", "arrivalTime"],
+  // "arrivalTime" and "arrived" appended at the end, same backward-compat
+  // reason as Expenses' "category" above.
+  [TAB.Guests]: [
+    "id", "eventId", "name", "roomId", "seatIndex", "notes", "createdAt", "updatedAt",
+    "arrivalTime", "arrived",
+  ],
 };
 
 // ---- primitive (de)serializers ----
@@ -116,12 +119,16 @@ export function rowToRoom(r: string[]): Room {
 
 // ---- Seating: Guests ----
 export function guestToRow(g: Guest): string[] {
-  return [g.id, g.eventId, g.name, g.roomId, num(g.seatIndex), g.notes, g.createdAt, g.updatedAt, g.arrivalTime];
+  return [
+    g.id, g.eventId, g.name, g.roomId, num(g.seatIndex), g.notes, g.createdAt, g.updatedAt,
+    g.arrivalTime, g.arrived ? "TRUE" : "FALSE",
+  ];
 }
 export function rowToGuest(r: string[]): Guest {
   return {
     id: s(r[0]), eventId: s(r[1]), name: s(r[2]), roomId: s(r[3]),
     seatIndex: r[4] === undefined || r[4] === "" ? -1 : pn(r[4]),
     notes: s(r[5]), createdAt: s(r[6]), updatedAt: s(r[7]), arrivalTime: s(r[8]),
+    arrived: s(r[9]).toUpperCase() === "TRUE",
   };
 }

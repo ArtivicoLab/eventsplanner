@@ -505,6 +505,7 @@ img { max-width: 100%; display: block; }
 .btn--ghost { background: var(--surface-2); color: var(--ink); }
 .btn--danger { background: var(--alert); color: #fff; }
 .btn--stack { margin-bottom: 10px; }
+.btn--link { background: none; padding: 10px 6px; color: var(--accent-text); text-decoration: underline; }
 .btn[disabled] { opacity: 0.5; pointer-events: none; }
 
 /* ---------- chips ---------- */
@@ -665,6 +666,13 @@ img { max-width: 100%; display: block; }
 .textarea { resize: vertical; min-height: 72px; }
 .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-3); }
 
+/* ---------- Settings screen: section rhythm (mockup: 36px above a section
+   title that follows content, 12px between title and its card) ---------- */
+.settings .section-title { margin-bottom: var(--sp-3); }
+.settings .card + .section-title,
+.settings .danger-card + .section-title,
+.settings .about-line + .section-title { margin-top: var(--sp-8); }
+
 /* ---------- Settings screen: row pattern (label+hint left, control right) ---------- */
 .srow { display: flex; align-items: center; gap: var(--sp-5); padding: var(--sp-4) 0; border-bottom: 1px solid var(--hairline); }
 .srow:first-child { padding-top: 0; }
@@ -697,6 +705,46 @@ img { max-width: 100%; display: block; }
 .about-line__sep { color: var(--hairline); }
 .about-line button, .about-line a { background: none; border: none; padding: 0; font: inherit; font-size: 13px; color: var(--accent-text); cursor: pointer; text-decoration: underline; }
 
+/* ---------- Lists & Labels: chip editor (mockup-style) ---------- */
+/* Small circular remove button inside a chip. */
+.chip__x {
+  border: none;
+  background: var(--surface-2);
+  color: var(--muted);
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  margin-right: -6px;
+  cursor: pointer;
+  transition: background 120ms var(--ease), color 120ms var(--ease);
+}
+.chip__x:hover { background: var(--accent-soft); color: var(--accent-text); }
+/* Dashed "+ Add …" chip that opens the inline input below. */
+.chip--add {
+  background: none;
+  border: 1.5px dashed color-mix(in srgb, var(--accent-2) 45%, transparent);
+  color: var(--accent-text);
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 120ms var(--ease), border-color 120ms var(--ease);
+}
+.chip--add:hover { background: var(--accent-2-soft); border-color: var(--accent-2-soft); }
+/* The chip-sized inline input the add-chip turns into. */
+.chip-input {
+  font-size: 13px;
+  padding: 7px 14px;
+  border-radius: var(--r-pill);
+  border: 1.5px dashed var(--accent-2);
+  background: var(--surface);
+  color: var(--ink);
+  outline: none;
+  width: 180px;
+}
+
 /* ---------- Danger Zone: outlined card instead of the plain surface ---------- */
 .danger-card {
   position: relative;
@@ -706,6 +754,25 @@ img { max-width: 100%; display: block; }
   box-shadow: var(--shadow);
   padding: var(--sp-4);
   overflow: hidden;
+}
+/* Inside the danger card the lock-gated button sits inline on the row's
+   right, mockup-style — outline while locked, solid red once both latches
+   open — instead of a full-width scary bar. The two latches still flank it. */
+.danger-card .lockgate { justify-content: flex-end; }
+.danger-card .lockgate__btn {
+  flex: none;
+  width: auto;
+  padding: 10px 18px;
+  font-size: 13.5px;
+  background: var(--surface);
+  color: var(--alert);
+  border: 1.5px solid color-mix(in srgb, var(--alert) 30%, transparent);
+  box-shadow: none;
+}
+.danger-card .lockgate__btn--unlocked {
+  background: var(--alert);
+  color: #fff;
+  border-color: var(--alert);
 }
 
 /* ---------- bottom sheet ---------- */

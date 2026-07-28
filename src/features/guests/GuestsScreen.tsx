@@ -12,6 +12,7 @@
 // stands in for all of those as plain text, same as it always has.)
 import { useEffect, useMemo, useState } from "react";
 import { EmptyState } from "../../components/EmptyState";
+import { Checkbox } from "../../components/Checkbox";
 import { Chip, ChipRow } from "../../components/Chip";
 import { PageTourButton } from "../../components/PageTourButton";
 import { BottomSheet } from "../../components/BottomSheet";
@@ -83,7 +84,7 @@ export function GuestsScreen() {
   // not an unrelated global count.
   const statsGuests = eventFilter ? guestsByEvent.get(eventFilter) ?? [] : guests;
   const statSeated = statsGuests.filter((g) => g.roomId).length;
-  const statArrival = statsGuests.filter((g) => g.arrivalTime).length;
+  const statArrived = statsGuests.filter((g) => g.arrived).length;
   const statNeedSeat = statsGuests.length - statSeated;
 
   const assignGuest = assignGuestId ? guests.find((g) => g.id === assignGuestId) ?? null : null;
@@ -130,8 +131,8 @@ export function GuestsScreen() {
               <div className="v">{statSeated}</div>
             </div>
             <div className="card stat">
-              <div className="k">Arrival times</div>
-              <div className="v">{statArrival}</div>
+              <div className="k">Arrived</div>
+              <div className="v">{statArrived}</div>
             </div>
             <div className="card stat">
               <div className="k">Need a seat</div>
@@ -195,6 +196,7 @@ export function GuestsScreen() {
                   rooms={rooms.filter((r) => r.eventId === event.id)}
                   onOpenGuest={openEdit}
                   onAssignSeat={setAssignGuestId}
+                  onToggleArrived={(g) => updateGuest(g.id, { arrived: !g.arrived })}
                 />
               ))}
             </div>
@@ -233,12 +235,14 @@ function GuestEventSection({
   rooms,
   onOpenGuest,
   onAssignSeat,
+  onToggleArrived,
 }: {
   event: EventItem;
   guests: Guest[];
   rooms: Room[];
   onOpenGuest: (id: string) => void;
   onAssignSeat: (id: string) => void;
+  onToggleArrived: (guest: Guest) => void;
 }) {
   const seated = guests.filter((g) => g.roomId).length;
   const seatedPct = guests.length ? pct(seated, guests.length) : 0;
@@ -269,7 +273,7 @@ function GuestEventSection({
       </div>
 
       {tableGroups.map(({ room, guests: tableGuests }) => (
-        <TableGroup key={room.id} room={room} guests={tableGuests} onOpenGuest={onOpenGuest} />
+        <TableGroup key={room.id} room={room} guests={tableGuests} onOpenGuest={onOpenGuest} onToggleArrived={onToggleArrived} />
       ))}
 
       {unseated.length > 0 && (
@@ -282,6 +286,11 @@ function GuestEventSection({
           <div className="tablegroup__rows">
             {unseated.map((g) => (
               <div key={g.id} className="task">
+                <Checkbox
+                  checked={g.arrived}
+                  onChange={() => onToggleArrived(g)}
+                  label={g.arrived ? `Mark ${g.name || "guest"} as not arrived` : `Mark ${g.name || "guest"} as arrived`}
+                />
                 <button
                   className="guestrow__avatar"
                   style={{ background: hashColor(g.id, PICKABLE_CATEGORY_COLORS), border: "none", cursor: "pointer" }}
@@ -298,6 +307,11 @@ function GuestEventSection({
                   <span className="task__title">{g.name || "Unnamed guest"}</span>
                   {g.notes && <span className="list__sub">{g.notes}</span>}
                 </button>
+                {g.arrived && (
+                  <span className="pill" style={{ color: "var(--success)", background: "var(--success-soft)", flex: "none" }}>
+                    Arrived
+                  </span>
+                )}
                 <button className="btn btn--ghost btn--auto" style={{ flex: "none" }} onClick={() => onAssignSeat(g.id)}>
                   <IconSeat size={14} /> Assign seat
                 </button>
@@ -329,10 +343,12 @@ function TableGroup({
   room,
   guests,
   onOpenGuest,
+  onToggleArrived,
 }: {
   room: Room;
   guests: Guest[];
   onOpenGuest: (id: string) => void;
+  onToggleArrived: (guest: Guest) => void;
 }) {
   const times = Array.from(new Set(guests.map((g) => g.arrivalTime).filter(Boolean))).sort();
   const timeLabel =
@@ -361,6 +377,13 @@ function TableGroup({
             onClick={() => onOpenGuest(g.id)}
             onKeyDown={onActivateKey(() => onOpenGuest(g.id))}
           >
+            <span onClick={(e) => e.stopPropagation()}>
+              <Checkbox
+                checked={g.arrived}
+                onChange={() => onToggleArrived(g)}
+                label={g.arrived ? `Mark ${g.name || "guest"} as not arrived` : `Mark ${g.name || "guest"} as arrived`}
+              />
+            </span>
             <span className="guestrow__avatar" style={{ background: hashColor(g.id, PICKABLE_CATEGORY_COLORS) }} aria-hidden>
               {initials(g.name)}
             </span>
@@ -371,8 +394,12 @@ function TableGroup({
             <span className="pill" style={{ background: "var(--surface-2)", color: "var(--muted)", flex: "none" }}>
               Seat {g.seatIndex + 1}
             </span>
-            {g.arrivalTime ? (
-              <span className="pill" style={{ color: "var(--accent)", background: "var(--accent-soft)", flex: "none" }}>
+            {g.arrived ? (
+              <span className="pill" style={{ color: "var(--success)", background: "var(--success-soft)", flex: "none" }}>
+                Arrived
+              </span>
+            ) : g.arrivalTime ? (
+              <span className="pill" style={{ color: "var(--accent-text)", background: "var(--accent-soft)", flex: "none" }}>
                 {formatTimeOfDay(g.arrivalTime)}
               </span>
             ) : (

@@ -64,10 +64,14 @@ export function useLiveFeed(): FeedItem[] {
   // rather than bunched at the end, so "the event and its guests, if any"
   // is the single most important thing this feed can say, ranked above
   // merely-upcoming events and well above the system facts at the bottom.
+  // Already-`arrived` guests are excluded: this feed is an "arriving soon"
+  // notice, not an attendance log, so once someone's checked in (at the
+  // door, marked by hand on Guests/Seating) there's nothing left to
+  // announce and they stop taking up one of the MAX_FEED_GUESTS slots.
   const liveGuestsByEvent = useMemo(() => {
     const liveIds = new Set(upcoming.filter((e) => e.startDate <= today).map((e) => e.id));
     const sorted = guests
-      .filter((g) => g.arrivalTime && liveIds.has(g.eventId))
+      .filter((g) => g.arrivalTime && !g.arrived && liveIds.has(g.eventId))
       .sort((a, b) => a.arrivalTime.localeCompare(b.arrivalTime))
       .slice(0, MAX_FEED_GUESTS);
     const m = new Map<string, typeof sorted>();

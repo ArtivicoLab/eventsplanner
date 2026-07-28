@@ -12,6 +12,7 @@ import { useGuests } from "../../stores/useGuests";
 import { confirmDialog } from "../../stores/useConfirm";
 import { useToast } from "../../stores/useToast";
 import { BottomSheet } from "../../components/BottomSheet";
+import { Checkbox } from "../../components/Checkbox";
 import { EmptyState } from "../../components/EmptyState";
 import { PageTourButton } from "../../components/PageTourButton";
 import { Segmented } from "../../components/Segmented";
@@ -403,6 +404,11 @@ export function SeatingScreen() {
               const room = eventRooms.find((r) => r.id === g.roomId);
               return (
                 <div key={g.id} className="guestrow">
+                  <Checkbox
+                    checked={g.arrived}
+                    onChange={() => updateGuest(g.id, { arrived: !g.arrived })}
+                    label={g.arrived ? `Mark ${g.name || "guest"} as not arrived` : `Mark ${g.name || "guest"} as arrived`}
+                  />
                   <button
                     className="guestrow__avatar"
                     style={{ background: hashColor(g.id, PICKABLE_CATEGORY_COLORS), border: "none" }}
@@ -419,7 +425,11 @@ export function SeatingScreen() {
                     <div className="guestrow__name">{g.name || "Unnamed guest"}</div>
                     <div className="guestrow__meta">
                       {room ? `${room.name}, seat ${g.seatIndex + 1}` : "Unseated"}
-                      {g.arrivalTime ? ` · Arriving ${formatTimeOfDay(g.arrivalTime)}` : ""}
+                      {g.arrived
+                        ? " · Arrived"
+                        : g.arrivalTime
+                          ? ` · Arriving ${formatTimeOfDay(g.arrivalTime)}`
+                          : ""}
                       {g.notes ? ` · ${g.notes}` : ""}
                     </div>
                   </button>
@@ -922,19 +932,21 @@ function GuestEditorSheet({
   open: boolean;
   guest: Guest | null;
   roomName?: string;
-  onSave: (patch: { name: string; arrivalTime: string; notes: string }) => void;
+  onSave: (patch: { name: string; arrivalTime: string; arrived: boolean; notes: string }) => void;
   onUnseat: () => void;
   onRemove: () => void;
   onClose: () => void;
 }) {
   const [name, setName] = useState("");
   const [arrivalTime, setArrivalTime] = useState("");
+  const [arrived, setArrived] = useState(false);
   const [notes, setNotes] = useState("");
 
   useMemo(() => {
     if (!open || !guest) return;
     setName(guest.name);
     setArrivalTime(guest.arrivalTime);
+    setArrived(guest.arrived);
     setNotes(guest.notes);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, guest?.id]);
@@ -962,6 +974,12 @@ function GuestEditorSheet({
           onChange={(e) => setArrivalTime(e.target.value)}
         />
       </div>
+      <div className="field" style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <Checkbox checked={arrived} onChange={() => setArrived((v) => !v)} label="Mark as arrived" />
+        <label className="field__label" style={{ margin: 0, cursor: "pointer" }} onClick={() => setArrived((v) => !v)}>
+          Arrived
+        </label>
+      </div>
       <div className="field">
         <label className="field__label" htmlFor="edit-guest-notes">Notes</label>
         <input id="edit-guest-notes" className="input" value={notes} onChange={(e) => setNotes(e.target.value)} />
@@ -970,7 +988,7 @@ function GuestEditorSheet({
         className="btn btn--primary btn--stack"
         disabled={!name.trim()}
         onClick={() => {
-          onSave({ name: name.trim(), arrivalTime, notes: notes.trim() });
+          onSave({ name: name.trim(), arrivalTime, arrived, notes: notes.trim() });
           onClose();
         }}
       >
