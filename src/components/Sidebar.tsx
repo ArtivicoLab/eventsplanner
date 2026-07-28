@@ -71,7 +71,7 @@ export function Sidebar({ active }: { active: Route }) {
       <div className="sidebar__brand">
         <img src="/favicon-96x96.png" alt="" aria-hidden width={26} height={26} className="sidebar__brandimg" />
         Event Planner
-        {/* "Demo" badge temporarily disabled for Etsy listing screenshots — restore: demo && <span className="brand-demo" data-tour="demo-badge">Demo</span> */}
+        {demo && <span className="brand-demo" data-tour="demo-badge">Demo</span>}
       </div>
       <div className="sidebar__scroll">
         <div className="sidebar__group">
