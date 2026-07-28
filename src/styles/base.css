@@ -59,15 +59,22 @@ img { max-width: 100%; display: block; }
   flex-direction: column;
 }
 .app__col { display: flex; flex-direction: column; min-height: 100dvh; }
+/* Every screen gets the same generous, fluid cap — not a flat 1160/1400px,
+   but a percentage-of-viewport ceiling so a laptop and an ultrawide monitor
+   both get a page that actually fills the space it's given instead of
+   stranding content in a narrow center column with empty gutters on either
+   side. No screen opts back into a narrower width at the page-container
+   level; where a specific block of content (e.g. Privacy's body text)
+   genuinely reads better narrower, that's a max-width on the content block
+   itself, not on the whole page. */
 .app__main {
   flex: 1;
   width: 100%;
-  max-width: 720px;
+  max-width: min(1520px, 96vw);
   margin: 0 auto;
   padding: var(--sp-4) var(--sp-4) calc(96px + var(--safe-bottom));
   animation: page-in 260ms var(--ease);
 }
-.app__main--wide { max-width: 1160px; }
 @keyframes page-in {
   from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: none; }
@@ -131,7 +138,7 @@ img { max-width: 100%; display: block; }
   right: 14px;
   bottom: calc(84px + var(--safe-bottom));
   z-index: 45;
-  max-width: min(220px, calc(100vw - 28px));
+  max-width: min(260px, calc(100vw - 28px));
   display: flex;
   flex-direction: column-reverse;
   align-items: flex-end;
@@ -148,9 +155,12 @@ img { max-width: 100%; display: block; }
   max-width: 100%;
   font-size: 12.5px;
   text-align: right;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  /* Full message, always — a long guest/event name wraps onto a second line
+     instead of being cut off with an ellipsis (confirmed live: "Marcus Webb
+     arriving 8:50 AM for Tech Summit" needs ~290px, well past the old fixed
+     220px width, so it was silently losing "...Tech Summit" every time). */
+  white-space: normal;
+  overflow-wrap: break-word;
   animation: liveticker-in 320ms var(--ease) backwards;
 }
 @media (prefers-reduced-motion: reduce) { .liveticker__item { animation: none; } }
@@ -1399,7 +1409,12 @@ img { max-width: 100%; display: block; }
   border: none;
 }
 
-.events-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-4); }
+/* Fluid column count instead of a hardcoded 2 — a wide page should seat
+   3-4 cards per row, not stretch 2 cards into being absurdly wide with a
+   ton of empty padding inside each one. auto-fill (not auto-fit) so a
+   short, filtered result list still lines up left instead of each
+   remaining card stretching to fill the row on its own. */
+.events-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: var(--sp-4); }
 @media (max-width: 720px) { .events-grid { grid-template-columns: 1fr; } }
 
 /* Each event is a little invitation: a category-colored ribbon across the
@@ -1496,6 +1511,34 @@ img { max-width: 100%; display: block; }
   border-bottom: 1px solid var(--hairline);
 }
 .task:last-child { border-bottom: none; }
+/* Both Tasks' triage groups (.taskgroup__card) and Guests' per-table/
+   unseated rows (.tablegroup__rows) are built from this same .task row —
+   below this width they're a single stacked list (the reference-mockup
+   look); at this width and up there's room for real columns, so they
+   become a fluid grid of compact row-cards instead of one every-row-
+   spans-the-full-width list with a big dead gap between the left content
+   and the right-pinned assignee/due-date/status. .taskgroup__card--hot
+   (Tasks' "Needs attention" group) is deliberately excluded — its whole-
+   card left accent bar is a single-column urgency treatment that a
+   multi-column reflow would break up. */
+@media (min-width: 1100px) {
+  .taskgroup__card:not(.taskgroup__card--hot),
+  .tablegroup__rows,
+  .expense-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+    gap: 10px 24px;
+  }
+  .taskgroup__card:not(.taskgroup__card--hot) { background: none; border: none; box-shadow: none; padding: 0; }
+  .taskgroup__card:not(.taskgroup__card--hot) .task,
+  .tablegroup__rows .task,
+  .expense-list .task {
+    border-bottom: none;
+    background: var(--surface-2);
+    border-radius: var(--r-input);
+    padding: 12px 16px;
+  }
+}
 .task__body { flex: 1; min-width: 0; }
 .task__title { font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .task__meta { display: flex; align-items: center; gap: 10px; margin-top: 4px; flex-wrap: wrap; }
@@ -1592,6 +1635,12 @@ img { max-width: 100%; display: block; }
 .seat--filled { border: 2px solid var(--surface); }
 
 .guestlist { display: flex; flex-direction: column; gap: 8px; }
+/* .guestrow is already its own small card (background + radius), so unlike
+   .task above it needs no per-row override here — just let it tile into a
+   grid instead of stacking single-file down a 1500px-wide page. */
+@media (min-width: 1100px) {
+  .guestlist { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 10px; }
+}
 .guestrow {
   display: flex;
   align-items: center;

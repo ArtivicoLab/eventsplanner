@@ -53,10 +53,7 @@ export default function App() {
         <Header />
         <DemoBanner />
         <ReconnectBanner />
-        <main
-          className={`app__main${route === "dashboard" || route === "calendar" || route === "seating" ? " app__main--wide" : ""}`}
-          key={route}
-        >
+        <main className="app__main" key={route}>
           {route === "dashboard" && <DashboardScreen />}
           {route === "calendar" && <CalendarScreen />}
           {route === "events" && <EventsScreen />}

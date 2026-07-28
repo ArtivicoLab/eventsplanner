@@ -175,44 +175,37 @@ export function BudgetScreen() {
           />
         </div>
       ) : (
-        <div className="card" style={{ padding: "4px 16px" }}>
-          {filteredExpenses.map((ex, i) => (
-            <div key={ex.id}>
-              <div
-                className="spread"
-                role="button"
-                tabIndex={0}
-                onClick={() => openEdit(ex.id)}
-                onKeyDown={onActivateKey(() => openEdit(ex.id))}
-                style={{ padding: "12px 0", cursor: "pointer" }}
-              >
-                <div style={{ minWidth: 0 }}>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      navigate("eventdetail", { id: ex.eventId });
-                    }}
-                    style={{
-                      background: "none",
-                      border: "none",
-                      padding: 0,
-                      fontWeight: 700,
-                      fontSize: 14,
-                      color: "var(--accent)",
-                      textAlign: "left",
-                    }}
-                  >
-                    {eventName(ex.eventId)}
-                  </button>
-                  <div className="muted fs-13" style={{ marginTop: 2 }}>
+        <div className="card expense-list" style={{ padding: "4px 16px" }}>
+          {filteredExpenses.map((ex) => (
+            <div
+              key={ex.id}
+              className="task"
+              role="button"
+              tabIndex={0}
+              onClick={() => openEdit(ex.id)}
+              onKeyDown={onActivateKey(() => openEdit(ex.id))}
+              style={{ cursor: "pointer" }}
+            >
+              <span className="task__body">
+                <button
+                  className="task__title"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate("eventdetail", { id: ex.eventId });
+                  }}
+                  style={{ background: "none", border: "none", padding: 0, color: "var(--accent-text)", textAlign: "left", cursor: "pointer" }}
+                >
+                  {eventName(ex.eventId)}
+                </button>
+                <span className="task__meta">
+                  <span className="muted fs-13">
                     {format(fromISO(ex.date), "MMM d, yyyy")}
                     {ex.category ? ` · ${ex.category}` : ""}
                     {ex.details ? ` · ${ex.details}` : ""}
-                  </div>
-                </div>
-                <div style={{ fontWeight: 700, flex: "none", marginLeft: 12 }}>{money(ex.amount, currency)}</div>
-              </div>
-              {i < filteredExpenses.length - 1 && <div style={{ borderTop: "1px solid var(--hairline)" }} />}
+                  </span>
+                </span>
+              </span>
+              <span style={{ fontWeight: 700, flex: "none" }}>{money(ex.amount, currency)}</span>
             </div>
           ))}
         </div>
