@@ -1526,16 +1526,23 @@ img { max-width: 100%; display: block; }
   .tablegroup__rows,
   .expense-list {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(460px, 1fr));
     gap: 10px 24px;
   }
   .taskgroup__card:not(.taskgroup__card--hot) { background: none; border: none; box-shadow: none; padding: 0; }
+  /* No box around each row — a full border-on-every-side made each item read
+     as its own disconnected little card, which looked worse than the plain
+     list it replaced (confirmed against a direct side-by-side: boxed rows =
+     "bad", plain rows with just a divider = "good"). A bottom-only divider,
+     the same hairline already used below this breakpoint, keeps every cell
+     reading as one continuous list that merely happens to flow into columns
+     — no fill color and no enclosing box, just the layout changes. */
   .taskgroup__card:not(.taskgroup__card--hot) .task,
   .tablegroup__rows .task,
   .expense-list .task {
-    border-bottom: none;
-    background: var(--surface-2);
-    border-radius: var(--r-input);
+    border: none;
+    border-bottom: 1px solid var(--hairline);
+    border-radius: 0;
     padding: 12px 16px;
   }
 }
