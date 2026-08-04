@@ -62,6 +62,17 @@ async function runBootstrap() {
   // actually hydrated — see resumePendingPush()'s own doc comment for why
   // this can't run any earlier.
   resumePendingPush();
+
+  // Backfill the connected Google account's email for devices that linked
+  // BEFORE the app started recording it (Settings.googleAccountEmail) —
+  // without this, an already-connected user wouldn't see which account
+  // their sheet uses until the next full reconnect. Silent token only
+  // (false): a background boot step must never pop an account picker; if
+  // the token needs reauth this quietly does nothing and the next real
+  // reconnect records it instead. Fire-and-forget — boot never waits on it.
+  void import("../lib/sync").then((sync) => {
+    if (sync.isConnected() && !sync.getAccountEmail()) void sync.rememberAccountEmail(false);
+  });
 }
 
 /**

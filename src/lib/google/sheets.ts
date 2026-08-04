@@ -209,3 +209,21 @@ export async function writeTab(
 export function spreadsheetUrl(id: string): string {
   return `https://docs.google.com/spreadsheets/d/${id}/edit`;
 }
+
+/**
+ * Email address of the signed-in Google account, via Drive's about.get —
+ * which the app's existing drive.file scope already permits, so this adds
+ * NO new OAuth scope and needs no consent-screen change (see TrackerA's
+ * CLAUDE.md for why touching the scope list is a real gotcha). Used to
+ * remember WHICH account the user's sheet lives in, so someone with several
+ * Google accounts isn't left guessing at the account picker.
+ */
+export async function fetchAccountEmail(allowInteractive: boolean): Promise<string> {
+  const res = await authedFetch(
+    "https://www.googleapis.com/drive/v3/about?fields=user(emailAddress)",
+    {},
+    allowInteractive
+  );
+  const json = (await ok(res)) as { user?: { emailAddress?: string } };
+  return json.user?.emailAddress ?? "";
+}

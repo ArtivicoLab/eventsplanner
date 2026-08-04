@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { navigate, useRoute } from "../router";
 import { useSync } from "../stores/useSync";
+import { useSettings } from "../stores/useSettings";
 import { useDemo } from "../lib/demo";
 import { openCoachTour } from "../stores/useCoachTour";
 import { useInstall, type InstallPlatform } from "../stores/useInstall";
@@ -22,6 +23,7 @@ const MANUAL_INSTALL_STEPS: Record<InstallPlatform, string> = {
 
 export function Header() {
   const { status, pending, connected, needsReauth, busy, tapToRetry } = useSync();
+  const accountEmail = useSettings((s) => s.googleAccountEmail);
   const demo = useDemo((s) => s.demo);
   const route = useRoute();
   const { platform, installed, canPrompt, promptInstall } = useInstall();
@@ -69,15 +71,27 @@ export function Header() {
           className={`syncpill ${cls}`}
           disabled={busy}
           onClick={() => tapToRetry()}
-          title={needsReauth ? "Your Google connection lapsed after being idle a while. Tap to sign in again, nothing was lost" : "Tap to retry syncing now"}
+          title={
+            needsReauth
+              ? `Your Google connection lapsed after being idle a while. Tap to sign in again${accountEmail ? ` with ${accountEmail}` : ""}, nothing was lost`
+              : "Tap to retry syncing now"
+          }
         >
           <span className="syncpill__dot" />
           {busy ? (needsReauth ? "Reconnecting…" : "Syncing…") : text}
+          {/* The email matters MOST here: reauth is about to open Google's
+              account picker, and a multi-account user needs to know which
+              one their sheet lives in before they pick. */}
+          {needsReauth && accountEmail && !busy && <span className="syncpill__email">{accountEmail}</span>}
         </button>
       ) : (
-        <span className={`syncpill ${cls}`} title={connected ? "Synced to your Google Sheet" : "Stored on this device"}>
+        <span
+          className={`syncpill ${cls}`}
+          title={connected ? `Synced to your Google Sheet${accountEmail ? ` (${accountEmail})` : ""}` : "Stored on this device"}
+        >
           <span className="syncpill__dot" />
           {text}
+          {connected && accountEmail && <span className="syncpill__email">{accountEmail}</span>}
         </span>
       ))}
       <button

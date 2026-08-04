@@ -131,6 +131,13 @@ export interface Settings {
   expenseCategories: string[]; // Expense Tracker's category picklist (Venue, Catering, ...)
   accessCode: string; // Etsy purchase code the buyer entered ("" = not activated)
   activated: boolean; // true once a valid accessCode was entered — unlocks Google Sheets connect
+  // Which Google account the Sheets connection last WORKED with ("" = never
+  // connected). Someone with several Google accounts otherwise ends up
+  // guessing at the account picker on every reauth — this is surfaced on the
+  // sync pill, Sidebar footer, and Settings so the right email is always one
+  // glance away. Recorded only after a successful sheet operation (never from
+  // a failed/wrong-account attempt), local-only like every per-device field.
+  googleAccountEmail: string;
 }
 
 export const DEFAULT_CATEGORIES = [

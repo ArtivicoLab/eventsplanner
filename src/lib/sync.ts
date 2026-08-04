@@ -30,6 +30,7 @@ import {
   batchGet,
   createSpreadsheet,
   ensureTabs,
+  fetchAccountEmail,
   ReauthRequiredError,
   SheetNotFoundError,
   SheetPermissionDeniedError,
@@ -346,6 +347,31 @@ async function syncAccessCode(id: string, allowInteractive: boolean): Promise<vo
   }
 }
 
+/** The Google account the connection last worked with ("" = unknown). */
+export function getAccountEmail(): string {
+  return useSettings.getState().googleAccountEmail;
+}
+
+/**
+ * Record which Google account the sheet connection is working with, into
+ * Settings (kv-persisted, reactive — the sync pill/Sidebar/Settings all
+ * read it live). Called ONLY after a successful sheet operation, never off
+ * a failed attempt: remembering the WRONG account someone just fumbled into
+ * would defeat the entire point (telling a multi-account user which one to
+ * pick). Best-effort — a failure here must never break the sync flow that
+ * just succeeded.
+ */
+export async function rememberAccountEmail(allowInteractive: boolean): Promise<void> {
+  try {
+    const email = await fetchAccountEmail(allowInteractive);
+    if (email && email !== getAccountEmail()) {
+      useSettings.getState().update({ googleAccountEmail: email });
+    }
+  } catch {
+    /* keep whatever we knew before */
+  }
+}
+
 /**
  * Lightweight reconnect for the common "token just expired, tab sat open a
  * while" case — tapToRetry()'s needsReauth branch. Deliberately narrower
@@ -357,6 +383,7 @@ async function syncAccessCode(id: string, allowInteractive: boolean): Promise<vo
 export async function reauth(): Promise<void> {
   await requestToken(true);
   await pushAll(true);
+  await rememberAccountEmail(true);
 }
 
 /**
@@ -396,6 +423,7 @@ export async function connect(): Promise<string> {
       await pushAll(true);
       await pull(true);
       await syncAccessCode(existing, true);
+      await rememberAccountEmail(true);
       return existing;
     } catch (err) {
       if (err instanceof SheetNotFoundError) {
@@ -416,6 +444,7 @@ export async function connect(): Promise<string> {
   setSpreadsheetId(id);
   await pushAll(true); // seed the new sheet with whatever is on-device now
   await syncAccessCode(id, true);
+  await rememberAccountEmail(true);
   return id;
 }
 
@@ -433,6 +462,7 @@ export async function createNewSheet(): Promise<string> {
   setSpreadsheetId(id);
   await pushAll(true);
   await syncAccessCode(id, true);
+  await rememberAccountEmail(true);
   return id;
 }
 
@@ -461,6 +491,7 @@ export async function relink(idOrUrl: string): Promise<void> {
   setSpreadsheetId(id);
   await pull(true);
   await syncAccessCode(id, true);
+  await rememberAccountEmail(true);
 }
 
 /**

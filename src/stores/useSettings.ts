@@ -27,6 +27,7 @@ const DEFAULTS: Settings = {
   expenseCategories: [...DEFAULT_EXPENSE_CATEGORIES],
   accessCode: "",
   activated: false,
+  googleAccountEmail: "",
 };
 
 interface SettingsState extends Settings {
@@ -74,5 +75,6 @@ function pickSettings(s: Settings): Settings {
     expenseCategories: s.expenseCategories,
     accessCode: s.accessCode,
     activated: s.activated,
+    googleAccountEmail: s.googleAccountEmail,
   };
 }

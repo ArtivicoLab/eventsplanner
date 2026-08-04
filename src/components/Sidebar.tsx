@@ -4,6 +4,7 @@ import { navigate, type Route } from "../router";
 import { NAV, SETTINGS_ITEM, ROUTE_LABELS } from "../nav";
 import { IconLock, IconCompass, IconPauseCircle, IconPlayCircle } from "./icons";
 import { useSync } from "../stores/useSync";
+import { useSettings } from "../stores/useSettings";
 import { useDemo } from "../lib/demo";
 import { useEvents } from "../stores/useEvents";
 import { useEventTasks } from "../stores/useEventTasks";
@@ -39,6 +40,7 @@ function FeedLine({ item }: { item: FeedItem }) {
 
 export function Sidebar({ active }: { active: Route }) {
   const { status, connected, needsReauth, busy, tapToRetry } = useSync();
+  const accountEmail = useSettings((s) => s.googleAccountEmail);
   const demo = useDemo((s) => s.demo);
   const { items: events } = useEvents();
   const { items: tasks } = useEventTasks();
@@ -157,15 +159,24 @@ export function Sidebar({ active }: { active: Route }) {
             className="syncpill"
             disabled={busy}
             onClick={() => tapToRetry()}
-            title={needsReauth ? "Your Google connection lapsed after being idle a while. Tap to sign in again, nothing was lost" : "Tap to retry syncing now"}
+            title={
+              needsReauth
+                ? `Your Google connection lapsed after being idle a while. Tap to sign in again${accountEmail ? ` with ${accountEmail}` : ""}, nothing was lost`
+                : "Tap to retry syncing now"
+            }
           >
             <span className="syncpill__dot" style={{ background: dot }} />
             {busy ? (needsReauth ? "Reconnecting…" : "Syncing…") : needsReauth ? "Tap to reconnect" : "Offline · tap to retry"}
+            {needsReauth && accountEmail && !busy && <span className="syncpill__email">{accountEmail}</span>}
           </button>
         ) : (
-          <span className="syncpill">
+          <span
+            className="syncpill"
+            title={connected && accountEmail ? `Synced to your Google Sheet (${accountEmail})` : undefined}
+          >
             <span className="syncpill__dot" style={{ background: dot }} />
             {connected ? STATUS_LABEL[status] : "Saved on device"}
+            {connected && accountEmail && <span className="syncpill__email">{accountEmail}</span>}
           </span>
         ))}
         <span className="sidebar__version">

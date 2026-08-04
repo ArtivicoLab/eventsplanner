@@ -709,6 +709,8 @@ img { max-width: 100%; display: block; }
 .srow__info { flex: 1; min-width: 0; }
 .srow__label { font-weight: 700; font-size: 14.5px; }
 .srow__hint { font-size: 13px; color: var(--muted); margin-top: 3px; line-height: 1.45; }
+.srow__account { display: flex; align-items: center; gap: 6px; }
+.srow__account b { color: var(--ink); }
 .srow__control { flex: none; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .srow__extra { padding-top: var(--sp-4); margin-top: var(--sp-1); border-top: 1px dashed var(--hairline); }
 @media (max-width: 480px) {
@@ -907,6 +909,22 @@ img { max-width: 100%; display: block; }
 .syncpill--ok .syncpill__dot { background: var(--success); }
 .syncpill--busy .syncpill__dot { background: var(--accent); }
 .syncpill--off .syncpill__dot { background: var(--warn); }
+/* Which Google account is connected — the whole point is staying visible
+   everywhere so someone with several accounts never has to guess at the
+   picker (see sync.ts's rememberAccountEmail). Own weight/color so it
+   reads as a secondary detail, not a duplicate status word; truncates
+   instead of wrapping so a long email can't blow out the mobile header's
+   single-row layout — full value is still in the pill's own title attr. */
+.syncpill__email {
+  font-weight: 600;
+  color: var(--muted);
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.syncpill__email::before { content: "· "; }
+@media (max-width: 480px) { .syncpill__email { max-width: 90px; } }
 
 .demobar, .reconnectbar, .updatebar {
   display: flex;

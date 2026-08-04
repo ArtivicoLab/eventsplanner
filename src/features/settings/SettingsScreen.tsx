@@ -121,6 +121,7 @@ export function SettingsScreen() {
     eventStatusIcons,
     expenseCategories,
     activated,
+    googleAccountEmail,
     update,
   } = useSettings();
   const {
@@ -305,6 +306,17 @@ export function SettingsScreen() {
                   ? "Connected. Your data lives in your own Google Drive."
                   : "Connect to back up your data and sync it across devices."}
             </div>
+            {/* Explicit, not just implied by the "Connected" hint above — if
+                you have several Google accounts this is the one place that
+                says outright which one your sheet is in, so reconnecting
+                later (here or from the reauth prompt) never means guessing
+                at the account picker. */}
+            {connected && googleAccountEmail && (
+              <div className="srow__hint srow__account">
+                <span className="dot-9" aria-hidden />
+                Signed in as <b className="txt-strong">{googleAccountEmail}</b>
+              </div>
+            )}
           </div>
           <div className="srow__control">
             {!hasClientId ? (
